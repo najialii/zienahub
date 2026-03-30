@@ -14,9 +14,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            // $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
+            $table->foreignId('tenant_id')->nullable()->constrained()->onDelete('cascade');
             $table->enum('role', ['customer', 'admin'])->default('customer');
             $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->string('locale', 5)->default('en'); // Language preference
+            $table->string('locale', 5)->default('en'); 
             $table->rememberToken();
             $table->timestamps();
             

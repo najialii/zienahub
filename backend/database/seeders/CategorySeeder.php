@@ -9,6 +9,13 @@ class CategorySeeder extends Seeder
 {
     public function run(): void
     {
+        $tenantId = DB::table('tenants')->value('id') ?? DB::table('tenants')->insertGetId([
+            'name' => 'Bloomcart Main Store',
+            'slug' => 'main-store',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $categories = [
             [
                 'slug' => 'flowers',
@@ -83,15 +90,14 @@ class CategorySeeder extends Seeder
         ];
 
         foreach ($categories as $categoryData) {
-            // Insert category
             $categoryId = DB::table('categories')->insertGetId([
+                'tenant_id' => $tenantId,
                 'slug' => $categoryData['slug'],
                 'image_url' => $categoryData['image_url'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Insert translations
             foreach ($categoryData['translations'] as $locale => $translation) {
                 DB::table('category_translations')->insert([
                     'category_id' => $categoryId,

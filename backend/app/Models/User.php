@@ -93,6 +93,12 @@ class User extends Authenticatable
         return $this->hasMany(Address::class);
     }
 
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+    
     /**
      * Check if the user is an admin.
      */

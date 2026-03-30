@@ -73,6 +73,13 @@ class Product extends Model
         return 'BLOOM-' . strtoupper(substr($this->slug, 0, 8)) . '-' . str_pad($this->id, 4, '0', STR_PAD_LEFT);
     }
 
+
+    
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+    
     /**
      * Get the subcategory that owns the product.
      */

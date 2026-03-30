@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('image_url')->nullable();
             $table->timestamps();
-            
+            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->index('slug');
         });
         
@@ -21,11 +21,11 @@ return new class extends Migration
         Schema::create('category_translations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
-            $table->string('locale', 5); // 'en' or 'ar'
+            $table->string('locale', 5); 
             $table->string('name');
             $table->text('description')->nullable();
             $table->timestamps();
-            
+            // $table->foreignId('tenant_id')->constrained()->onDelete('cascade');            
             $table->unique(['category_id', 'locale']);
             $table->index('locale');
         });

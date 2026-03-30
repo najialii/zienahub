@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->string('slug')->unique();
             $table->timestamps();
-            
+            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->index('slug');
             $table->index('category_id');
         });

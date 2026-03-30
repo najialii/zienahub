@@ -17,14 +17,13 @@ return new class extends Migration
             $table->string('image_url')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
-            
+            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->index('slug');
             $table->index('subcategory_id');
             $table->index('status');
             $table->index('price');
         });
         
-        // Translations table for products
         Schema::create('product_translations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');

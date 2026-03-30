@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->text('description_en')->nullable();
             $table->text('description_ar')->nullable();
+            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->enum('type', ['occasion', 'giftee', 'style', 'season', 'age_group', 'other'])->default('other');
             $table->string('color')->default('#3B82F6'); // Hex color for UI
             $table->string('icon')->nullable(); // Icon name or emoji

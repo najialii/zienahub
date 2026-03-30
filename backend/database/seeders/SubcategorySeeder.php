@@ -9,6 +9,14 @@ class SubcategorySeeder extends Seeder
 {
     public function run(): void
     {
+        // 1. Get the tenant ID (or create one if the table is empty)
+        $tenantId = DB::table('tenants')->value('id') ?? DB::table('tenants')->insertGetId([
+            'name' => 'Bloomcart Store',
+            'slug' => 'bloomcart',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $subcategories = [
             // Flowers subcategories
             [
@@ -134,22 +142,24 @@ class SubcategorySeeder extends Seeder
         ];
 
         foreach ($subcategories as $subcategoryData) {
-            // Get category ID
+            // 2. Get category ID scoped by the same tenant
             $categoryId = DB::table('categories')
                 ->where('slug', $subcategoryData['category_slug'])
+                ->where('tenant_id', $tenantId) // Added tenant check
                 ->value('id');
 
             if (!$categoryId) continue;
 
-            // Insert subcategory
+            // 3. Insert subcategory with tenant_id
             $subcategoryId = DB::table('subcategories')->insertGetId([
+                'tenant_id' => $tenantId, // <--- ADDED THIS
                 'category_id' => $categoryId,
                 'slug' => $subcategoryData['slug'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Insert translations
+            // 4. Insert translations
             foreach ($subcategoryData['translations'] as $locale => $translation) {
                 DB::table('subcategory_translations')->insert([
                     'subcategory_id' => $subcategoryId,

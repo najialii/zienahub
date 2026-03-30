@@ -40,6 +40,14 @@ class Subcategory extends Model
         return $this->hasMany(Product::class);
     }
 
+
+  
+    
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
     /**
      * Get the translations for this subcategory.
      */

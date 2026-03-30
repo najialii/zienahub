@@ -65,7 +65,14 @@ class Category extends Model
         return $translation ? $translation->name : '';
     }
 
+
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
     /**
+     * 
      * Get description for specific locale
      */
     public function getDescription($locale = 'en')

@@ -6,34 +6,32 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-            $table->string('session_id')->nullable(); // For guest carts
-            $table->timestamps();
-            
-            $table->index('user_id');
-            $table->index('session_id');
-        });
-        
-        Schema::create('cart_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('cart_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->integer('quantity')->default(1);
-            $table->decimal('price_at_addition', 10, 2);
+            $table->string('product_name');
+            $table->string('product_slug');
+            $table->decimal('product_price', 10, 2);
+            $table->string('product_image_url')->nullable();
+            $table->string('product_sku')->nullable();
+            $table->integer('quantity');
             $table->timestamps();
-            
-            $table->index('cart_id');
-            $table->index('product_id');
+
+            $table->unique(['user_id', 'product_id']);
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('cart_items');
         Schema::dropIfExists('carts');
     }
 };

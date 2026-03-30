@@ -9,7 +9,14 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        // Available real images in storage
+        // 1. Get the tenant ID (or create one if the table is empty)
+        $tenantId = DB::table('tenants')->value('id') ?? DB::table('tenants')->insertGetId([
+            'name' => 'Bloomcart Store',
+            'slug' => 'bloomcart',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $availableImages = [
             '/storage/images/products/T68-3.jpg',
             '/storage/images/products/TEV75-2.jpg',
@@ -295,15 +302,17 @@ class ProductSeeder extends Seeder
         ];
 
         foreach ($products as $productData) {
-            // Get subcategory ID
+            // Get subcategory ID scoped by tenant
             $subcategoryId = DB::table('subcategories')
                 ->where('slug', $productData['subcategory_slug'])
+                ->where('tenant_id', $tenantId) // Added tenant check
                 ->value('id');
 
             if (!$subcategoryId) continue;
 
-            // Insert product
+            // Insert product with tenant_id
             $productId = DB::table('products')->insertGetId([
+                'tenant_id' => $tenantId, // <--- ADDED TENANT ID
                 'subcategory_id' => $subcategoryId,
                 'slug' => $productData['slug'],
                 'price' => $productData['price'],
@@ -327,11 +336,11 @@ class ProductSeeder extends Seeder
             }
 
             // Assign tags to products based on product type and category
-            $this->assignTagsToProduct($productId, $productData);
+            $this->assignTagsToProduct($productId, $productData, $tenantId);
         }
     }
 
-    private function assignTagsToProduct($productId, $productData)
+    private function assignTagsToProduct($productId, $productData, $tenantId)
     {
         $tagSlugs = [];
 
@@ -377,9 +386,13 @@ class ProductSeeder extends Seeder
                 break;
         }
 
-        // Get tag IDs and insert into pivot table
+        // Get tag IDs (filtered by tenant) and insert into pivot table
         foreach ($tagSlugs as $tagSlug) {
-            $tagId = DB::table('tags')->where('slug', $tagSlug)->value('id');
+            $tagId = DB::table('tags')
+                ->where('slug', $tagSlug)
+                ->where('tenant_id', $tenantId) // Ensure tag belongs to same tenant
+                ->value('id');
+
             if ($tagId) {
                 DB::table('product_tag')->insert([
                     'product_id' => $productId,
