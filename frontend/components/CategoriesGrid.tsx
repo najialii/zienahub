@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { categoriesApi } from '@/lib/api';
-import type { Category } from '@/lib/mockData';
+import type { Category } from '@/lib/types';
 
 export default function CategoriesGrid() {
   const locale = useLocale() as 'en' | 'ar';

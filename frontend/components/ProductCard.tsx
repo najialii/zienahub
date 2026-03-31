@@ -95,7 +95,7 @@ export default function ProductCard({
     e.stopPropagation();
     
     if (cartItem && quantityInCart < product.stock_quantity) {
-      updateQuantity(cartItem.id, quantityInCart + 1);
+      updateQuantity(cartItem.productId, quantityInCart + 1);
     }
   };
 
@@ -105,9 +105,9 @@ export default function ProductCard({
     
     if (cartItem) {
       if (quantityInCart > 1) {
-        updateQuantity(cartItem.id, quantityInCart - 1);
+        updateQuantity(cartItem.productId, quantityInCart - 1);
       } else {
-        updateQuantity(cartItem.id, 0);
+        updateQuantity(cartItem.productId, 0);
       }
     }
   };

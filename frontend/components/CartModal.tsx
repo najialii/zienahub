@@ -17,15 +17,12 @@ export default function CartModal() {
 
   return (
     <>
-      {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 z-40 transition-opacity"
         onClick={closeCart}
       />
 
-      {/* Modal */}
       <div className={`fixed top-0 ${locale === 'ar' ? 'left-0' : 'right-0'} h-full w-full max-w-md bg-white shadow-xl z-50 flex flex-col`}>
-        {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-neutral-100">
           <h2 className="text-lg font-semibold flex items-center gap-2 text-neutral-900">
             <ShoppingBasket className="w-5 h-5" />
@@ -65,7 +62,6 @@ export default function CartModal() {
                     />
                   </div>
 
-                  {/* Product Details */}
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/${locale}/products/${item.slug}`}
@@ -78,10 +74,9 @@ export default function CartModal() {
                       <Price amount={item.price} symbolClassName="w-4 h-4" />
                     </p>
 
-                    {/* Quantity Controls */}
                     <div className="flex items-center gap-2 mt-2">
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
                         className="p-1 hover:bg-gray-100 rounded transition-colors"
                         aria-label="Decrease quantity"
                       >
@@ -91,14 +86,14 @@ export default function CartModal() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                         className="p-1 hover:bg-gray-100 rounded transition-colors"
                         aria-label="Increase quantity"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item.productId)}
                         className="ml-auto text-red-500 hover:text-red-700 text-sm transition-colors"
                       >
                         {locale === 'en' ? 'Remove' : 'إزالة'}

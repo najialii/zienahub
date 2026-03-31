@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   LayoutDashboard, 
@@ -27,14 +27,14 @@ import AdminDebug from '@/components/AdminDebug';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function AdminLayout({
-  children,
-  params: { locale }
+  children
 }: {
   children: React.ReactNode;
-  params: { locale: string };
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const params = useParams<{ locale: string }>();
+  const locale = params?.locale || 'en';
   const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed on mobile
   const [mounted, setMounted] = useState(false);
   const { profile, isLoggedIn, logout } = useUserStore();

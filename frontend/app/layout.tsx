@@ -4,6 +4,13 @@ type Props = {
   children: ReactNode;
 };
 
+// Root Layout MUST contain html and body tags
 export default function RootLayout({ children }: Props) {
-  return children;
+  return (
+    <html lang="en">
+      <body>
+        {children}
+      </body>
+    </html>
+  );
 }

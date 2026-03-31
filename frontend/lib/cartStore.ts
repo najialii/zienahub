@@ -82,7 +82,6 @@ export const useCartStore = create<CartStore>()(
       },
 
       addItem: async (item) => {
-        // Validate that productId exists
         if (!item.productId) {
           console.error('Cannot add item without productId:', item);
           return;
@@ -92,7 +91,6 @@ export const useCartStore = create<CartStore>()(
         const existingItem = items.find((i) => i.productId === item.productId);
         const quantity = item.quantity || 1;
 
-        // Update local state immediately (optimistic update)
         if (existingItem) {
           set({
             items: items.map((i) =>
@@ -106,7 +104,8 @@ export const useCartStore = create<CartStore>()(
             items: [
               ...items,
               {
-                id: Date.now(),
+                // id is not used for local operations, but keep for server sync compatibility
+                id: undefined,
                 productId: item.productId,
                 name: item.name,
                 slug: item.slug,
@@ -119,7 +118,6 @@ export const useCartStore = create<CartStore>()(
           });
         }
 
-        // Sync with server if authenticated
         const token = localStorage.getItem('auth_token');
         if (!token) {
           console.log('No auth token, keeping local cart only');
@@ -141,9 +139,19 @@ export const useCartStore = create<CartStore>()(
           });
 
           const data = await response.json();
-          if (!response.ok) {
+          if (response.ok && data.success) {
+            console.log('Cart synced with server successfully');
+            // Update the local item id if it's a new item
+            if (!existingItem && data.data && data.data.id) {
+              const currentItems = get().items;
+              const newItemIndex = currentItems.findIndex(i => i.productId === item.productId);
+              if (newItemIndex !== -1) {
+                currentItems[newItemIndex].id = data.data.id;
+                set({ items: [...currentItems] });
+              }
+            }
+          } else {
             console.error('Failed to sync cart with server:', data);
-            // Revert optimistic update on error
             if (existingItem) {
               set({
                 items: items.map((i) =>
@@ -155,31 +163,45 @@ export const useCartStore = create<CartStore>()(
             } else {
               set({ items: items.filter(i => i.productId !== item.productId) });
             }
-          } else {
-            console.log('Cart synced with server successfully');
           }
         } catch (error) {
           console.error('Network error syncing cart:', error);
+          if (existingItem) {
+            set({
+              items: items.map((i) =>
+                i.productId === item.productId
+                  ? { ...i, quantity: existingItem.quantity }
+                  : i
+              ),
+            });
+          } else {
+            set({ items: items.filter(i => i.productId !== item.productId) });
+          }
         }
       },
 
       removeItem: async (id) => {
         const items = get().items;
-        const item = items.find(i => i.id === id);
+        // Remove by productId for local state
+        const item = items.find(i => i.productId === id);
         if (!item) return;
 
-        // Update local state immediately
-        set({ items: items.filter((item) => item.id !== id) });
+        set({ items: items.filter((item) => item.productId !== id) });
 
-        // Sync with server if authenticated
         const token = localStorage.getItem('auth_token');
         if (!token) {
           console.log('No auth token, keeping local cart only');
           return;
         }
 
+        // Use server id if available
+        const serverId = item.id;
+        if (!serverId) {
+          console.error('Cannot remove item without server id, skipping server sync');
+          return;
+        }
         try {
-          const response = await fetch(`${API_URL}/cart/${id}`, {
+          const response = await fetch(`${API_URL}/cart/${serverId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -189,12 +211,10 @@ export const useCartStore = create<CartStore>()(
 
           if (!response.ok) {
             console.error('Failed to remove item from server cart');
-            // Revert on error
             set({ items });
           }
         } catch (error) {
           console.error('Network error removing cart item:', error);
-          // Revert on error
           set({ items });
         }
       },
@@ -203,15 +223,18 @@ export const useCartStore = create<CartStore>()(
         const items = get().items;
         const previousItems = [...items];
 
+        // Find by productId for local state
+        const item = items.find(i => i.productId === id);
+        if (!item) return;
+
         if (quantity <= 0) {
           await get().removeItem(id);
           return;
         }
 
-        // Update local state immediately
         set({
           items: items.map((item) =>
-            item.id === id ? { ...item, quantity } : item
+            item.productId === id ? { ...item, quantity } : item
           ),
         });
 
@@ -222,8 +245,14 @@ export const useCartStore = create<CartStore>()(
           return;
         }
 
+        // Use server id if available
+        const serverId = item.id;
+        if (!serverId) {
+          console.error('Cannot update item without server id, skipping server sync');
+          return;
+        }
         try {
-          const response = await fetch(`${API_URL}/cart/${id}`, {
+          const response = await fetch(`${API_URL}/cart/${serverId}`, {
             method: 'PUT',
             headers: {
               'Authorization': `Bearer ${token}`,

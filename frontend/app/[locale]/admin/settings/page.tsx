@@ -167,7 +167,7 @@ export default function SettingsPage() {
       
       console.log('Platform settings response status:', platformResponse.status);
       
-      let platformData = {};
+      let platformData: Record<string, string> = {};
       if (platformResponse.ok) {
         const platformResult = await platformResponse.json();
         // Convert grouped platform settings to flat object

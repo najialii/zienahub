@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import { categoriesApi, productsApi } from '@/lib/api';
-import type { Category, Product } from '@/lib/mockData';
+import type { Category, Product } from '@/lib/types';
 
 export default function CategoryDetailPage() {
   const params = useParams();

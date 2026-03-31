@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { categoriesApi } from '@/lib/api';
-import type { Category } from '@/lib/mockData';
+import type { Category } from '@/lib/types';
 
 export default function CategoriesPage() {
   const locale = useLocale() as 'en' | 'ar';
