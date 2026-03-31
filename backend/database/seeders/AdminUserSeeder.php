@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -13,26 +14,33 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create admin user
+        $mainTenant = Tenant::firstOrCreate(
+            ['slug' => 'bloomcart'],
+            ['name' => 'Bloomcart Store']
+        );
+
         User::updateOrCreate(
             ['email' => 'admin@email.com'],
             [
-                'name' => 'Admin User',
+                'name' => 'Super Admin',
                 'password' => Hash::make('11235813nj'),
-                'role' => 'admin',
+                'role' => 'super_admin',
+                'tenant_id' => null,
+                'status' => 'active',
+                'locale' => 'en',
             ]
         );
 
-        // Create test customer user
         User::updateOrCreate(
-            ['email' => 'user@email.com'],
+            ['email' => 'tenant.admin@email.com'],
             [
-                'name' => 'Test User',
+                'name' => 'Default Tenant Admin',
                 'password' => Hash::make('11235813nj'),
-                'role' => 'customer',
+                'role' => 'tenant_admin',
+                'tenant_id' => $mainTenant->id,
+                'status' => 'active',
+                'locale' => 'en',
             ]
         );
-
-        $this->command->info('Admin and test users created successfully!');
     }
 }

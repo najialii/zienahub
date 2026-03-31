@@ -2,66 +2,111 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Tenant;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Get an existing tenant or create a default one immediately
-        // This ensures the foreign key check never fails.
-        $tenantId = DB::table('tenants')->value('id') ?? DB::table('tenants')->insertGetId([
-            'name' => 'Bloomcart Store',
-            'slug' => 'bloomcart',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $mainTenant = Tenant::firstOrCreate(
+            ['slug' => 'bloomcart'],
+            [
+                'name' => 'Bloomcart Store',
+                'subscription_plan' => 'pro',
+                'subscription_status' => 'active',
+                'monthly_price' => 299,
+                'max_users' => 20,
+                'max_products' => 5000,
+                'subscription_starts_at' => now()->subMonths(1),
+                'subscription_ends_at' => now()->addMonths(11),
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $giftTenant = Tenant::firstOrCreate(
+            ['slug' => 'gift-hub'],
+            [
+                'name' => 'Gift Hub',
+                'subscription_plan' => 'starter',
+                'subscription_status' => 'trial',
+                'monthly_price' => 99,
+                'max_users' => 5,
+                'max_products' => 1000,
+                'subscription_starts_at' => now()->subDays(3),
+                'subscription_ends_at' => now()->addDays(11),
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
 
         $users = [
-            // Admin users
             [
-                'name' => 'Admin User',
+                'name' => 'Bloomcart Admin',
                 'email' => 'admin@bloomcart.com',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
+                'password' => 'password',
+                'role' => 'tenant_admin',
                 'status' => 'active',
                 'locale' => 'en',
+                'tenant_id' => $mainTenant->id,
                 'created_at' => Carbon::now()->subMonths(12),
                 'updated_at' => Carbon::now()->subMonths(12),
             ],
             [
-                'name' => 'مدير النظام',
-                'email' => 'admin.ar@bloomcart.com',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
+                'name' => 'Gift Hub Admin',
+                'email' => 'admin@gifthub.com',
+                'password' => 'password',
+                'role' => 'tenant_admin',
                 'status' => 'active',
-                'locale' => 'ar',
-                'created_at' => Carbon::now()->subMonths(12),
-                'updated_at' => Carbon::now()->subMonths(12),
+                'locale' => 'en',
+                'tenant_id' => $giftTenant->id,
+                'created_at' => Carbon::now()->subMonths(10),
+                'updated_at' => Carbon::now()->subMonths(10),
             ],
-            // ... [Keep all your other user arrays here]
+            [
+                'name' => 'Bloomcart Customer',
+                'email' => 'user@bloomcart.com',
+                'password' => 'password',
+                'role' => 'customer',
+                'status' => 'active',
+                'locale' => 'en',
+                'tenant_id' => $mainTenant->id,
+                'created_at' => Carbon::now()->subMonths(8),
+                'updated_at' => Carbon::now()->subMonths(8),
+            ],
             [
                 'name' => 'Inactive User',
                 'email' => 'inactive@example.com',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => 'customer',
                 'status' => 'inactive',
                 'locale' => 'en',
+                'tenant_id' => $mainTenant->id,
                 'created_at' => Carbon::now()->subMonths(9),
                 'updated_at' => Carbon::now()->subMonths(9),
             ],
         ];
 
-        // 2. Map through the array and attach the tenantId to every record
-        $finalUsers = array_map(function ($user) use ($tenantId) {
-            $user['tenant_id'] = $tenantId;
-            return $user;
-        }, $users);
-
-        // 3. Insert the modified array
-        DB::table('users')->insert($finalUsers);
+        foreach ($users as $userData) {
+            User::updateOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['name'],
+                    'password' => Hash::make($userData['password']),
+                    'role' => $userData['role'],
+                    'status' => $userData['status'],
+                    'locale' => $userData['locale'],
+                    'tenant_id' => $userData['tenant_id'],
+                    'created_at' => $userData['created_at'],
+                    'updated_at' => $userData['updated_at'],
+                ]
+            );
+        }
     }
 }

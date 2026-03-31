@@ -11,9 +11,7 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    /**
-     * Register a new user
-     */
+ 
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -26,7 +24,7 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'customer', // Default role
+            'role' => 'customer',
         ]);
 
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -40,15 +38,14 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'tenant_id' => $user->tenant_id,
                 ],
                 'token' => $token,
             ],
         ], 201);
     }
 
-    /**
-     * Login user
-     */
+    
     public function login(Request $request)
     {
         $validated = $request->validate([
@@ -64,10 +61,8 @@ class AuthController extends Controller
             ]);
         }
 
-        // Revoke all previous tokens
         $user->tokens()->delete();
 
-        // Create new token
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
@@ -79,15 +74,13 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'tenant_id' => $user->tenant_id,
                 ],
                 'token' => $token,
             ],
         ]);
     }
 
-    /**
-     * Logout user (revoke token)
-     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -98,9 +91,7 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Get authenticated user
-     */
+    
     public function me(Request $request)
     {
         return response()->json([
@@ -111,14 +102,13 @@ class AuthController extends Controller
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'role' => $request->user()->role,
+                    'tenant_id' => $request->user()->tenant_id,
                 ],
             ],
         ]);
     }
 
-    /**
-     * Change user password
-     */
+    
     public function changePassword(Request $request)
     {
         $validated = $request->validate([
@@ -128,7 +118,6 @@ class AuthController extends Controller
 
         $user = $request->user();
 
-        // Verify current password
         if (!Hash::check($validated['current_password'], $user->password)) {
             return response()->json([
                 'success' => false,
@@ -139,11 +128,9 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Update password
         $user->password = Hash::make($validated['new_password']);
         $user->save();
 
-        // Revoke all tokens except current
         $currentToken = $request->user()->currentAccessToken();
         $user->tokens()->where('id', '!=', $currentToken->id)->delete();
 
@@ -153,37 +140,29 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Redirect to Google OAuth
-     */
     public function redirectToGoogle()
     {
         return Socialite::driver('google')->stateless()->redirect();
     }
 
-    /**
-     * Handle Google OAuth callback
-     */
+   
     public function handleGoogleCallback()
     {
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            // Find or create user
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if (!$user) {
-                // Create new user
                 $user = User::create([
                     'name' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
-                    'password' => Hash::make(Str::random(24)), // Random password for OAuth users
+                    'password' => Hash::make(Str::random(24)), 
                     'role' => 'customer',
                     'google_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar(),
                 ]);
             } else {
-                // Update existing user with Google info if not set
                 if (!$user->google_id) {
                     $user->google_id = $googleUser->getId();
                 }
@@ -193,10 +172,8 @@ class AuthController extends Controller
                 $user->save();
             }
 
-            // Create token
             $token = $user->createToken('auth-token')->plainTextToken;
 
-            // Redirect to frontend with token
             $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
             return redirect()->away("{$frontendUrl}/auth/callback?token={$token}");
 
@@ -206,19 +183,14 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Get user profile with stats
-     */
     public function profile(Request $request)
     {
         $user = $request->user();
 
-        // Get user stats
         $totalOrders = $user->orders()->count();
         $totalSpent = $user->orders()->where('status', '!=', 'cancelled')->sum('total_amount');
         $wishlistItems = $user->wishlists()->count();
 
-        // Get recent orders
         $recentOrders = $user->orders()
             ->orderBy('created_at', 'desc')
             ->take(3)
@@ -241,6 +213,7 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'tenant_id' => $user->tenant_id,
                     'avatar' => $user->avatar,
                     'member_since' => $user->created_at->format('F Y'),
                 ],

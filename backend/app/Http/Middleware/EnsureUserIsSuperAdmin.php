@@ -6,19 +6,14 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureUserIsAdmin
+class EnsureUserIsSuperAdmin
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user() || !$request->user()->isTenantAdmin()) {
+        if (!$request->user() || !$request->user()->isSuperAdmin()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized. Tenant admin access required.'
+                'message' => 'Unauthorized. Super admin access required.'
             ], 403);
         }
 

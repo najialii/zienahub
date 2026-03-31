@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\GiftBoxController;
+use App\Http\Controllers\SuperAdmin\TenantManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -250,14 +251,13 @@ Route::middleware('auth:sanctum')->get('/orders', [App\Http\Controllers\OrderCon
 Route::middleware('auth:sanctum')->get('/orders/{id}', [App\Http\Controllers\OrderController::class, 'show']);
 
 // Admin product routes (protected - requires authentication and admin role)
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'tenant_admin'])->group(function () {
     Route::post('/admin/products', [ProductController::class, 'store']);
     Route::put('/admin/products/{id}', [ProductController::class, 'update']);
     Route::delete('/admin/products/{id}', [ProductController::class, 'destroy']);
 });
 
-// Temporarily unprotected for testing
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', 'tenant_admin'])->group(function () {
     Route::get('/admin/products', [ProductController::class, 'adminIndex']);
     Route::get('/admin/products/{id}', [ProductController::class, 'adminShow']);
     
@@ -375,6 +375,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/admin/customers/{id}', [App\Http\Controllers\Admin\CustomerController::class, 'show']);
     Route::get('/admin/customers/{id}/timeline', [App\Http\Controllers\Admin\CustomerController::class, 'getTimeline']);
     Route::get('/admin/customers/stats', [App\Http\Controllers\Admin\CustomerController::class, 'getStats']);
+});
+
+Route::middleware(['auth:sanctum', 'super_admin'])->group(function () {
+    Route::get('/super-admin/dashboard', [TenantManagementController::class, 'dashboard']);
+    Route::get('/super-admin/tenants', [TenantManagementController::class, 'index']);
+    Route::post('/super-admin/tenants', [TenantManagementController::class, 'store']);
+    Route::put('/super-admin/tenants/{tenant}', [TenantManagementController::class, 'update']);
+    Route::put('/super-admin/tenants/{tenant}/subscription', [TenantManagementController::class, 'updateSubscription']);
+    Route::delete('/super-admin/tenants/{tenant}', [TenantManagementController::class, 'destroy']);
 });
 
 // Public tag routes (no authentication needed)

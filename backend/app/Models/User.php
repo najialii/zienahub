@@ -2,108 +2,85 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Bavix\Wallet\Traits\HasWallet;
+use Bavix\Wallet\Interfaces\Wallet;
 
-class User extends Authenticatable
+class User extends Authenticatable implements Wallet
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasWallet;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
+        'tenant_id',
         'google_id',
         'avatar',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    /**
-     * Get the gift boxes for the user.
-     */
     public function giftBoxes()
     {
         return $this->hasMany(GiftBox::class);
     }
 
-    /**
-     * Get the gift box shares created by the user.
-     */
     public function giftBoxShares()
     {
         return $this->hasMany(GiftBoxShare::class);
     }
 
-    /**
-     * Get the orders for the user.
-     */
+  
+
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
-    /**
-     * Get the cart items for the user.
-     */
     public function cartItems()
     {
         return $this->hasMany(Cart::class);
     }
 
-    /**
-     * Get the wishlist items for the user.
-     */
     public function wishlists()
     {
         return $this->hasMany(Wishlist::class);
     }
 
-    /**
-     * Get the addresses for the user.
-     */
     public function addresses()
     {
         return $this->hasMany(Address::class);
     }
 
-
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
     }
-    
-    /**
-     * Check if the user is an admin.
-     */
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return in_array($this->role, ['tenant_admin', 'super_admin', 'admin'], true);
+    }
+
+    public function isTenantAdmin(): bool
+    {
+        return in_array($this->role, ['tenant_admin', 'admin'], true);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
     }
 }

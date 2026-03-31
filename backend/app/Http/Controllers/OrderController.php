@@ -155,7 +155,7 @@ class OrderController extends Controller
         $query = Order::with(['items.product', 'deliveryPerson']);
 
         // Non-admin users only see their own orders
-        if (auth()->check() && auth()->user()->role !== 'admin') {
+        if (auth()->check() && !in_array(auth()->user()->role, ['tenant_admin', 'super_admin', 'admin'], true)) {
             $query->where('user_id', auth()->id());
         }
 
@@ -191,7 +191,7 @@ class OrderController extends Controller
             ->firstOrFail();
 
         // Check authorization
-        if (auth()->check() && auth()->user()->role !== 'admin' && $order->user_id !== auth()->id()) {
+        if (auth()->check() && !in_array(auth()->user()->role, ['tenant_admin', 'super_admin', 'admin'], true) && $order->user_id !== auth()->id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

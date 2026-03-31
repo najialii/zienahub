@@ -16,7 +16,7 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = User::where('role', '!=', 'admin')
+            $query = User::where('role', 'customer')
                 ->withCount(['orders', 'cartItems'])
                 ->withSum('orders', 'total_amount');
 
@@ -75,7 +75,7 @@ class CustomerController extends Controller
     {
         try {
             $customer = User::where('id', $id)
-                ->where('role', '!=', 'admin')
+                ->where('role', 'customer')
                 ->withCount(['orders', 'cartItems', 'wishlists'])
                 ->withSum('orders', 'total_amount')
                 ->first();
@@ -129,7 +129,7 @@ class CustomerController extends Controller
     {
         try {
             $customer = User::where('id', $id)
-                ->where('role', '!=', 'admin')
+                ->where('role', 'customer')
                 ->first();
 
             if (!$customer) {
@@ -463,15 +463,15 @@ class CustomerController extends Controller
     {
         try {
             $stats = [
-                'total_customers' => User::where('role', '!=', 'admin')->count(),
-                'new_customers_this_month' => User::where('role', '!=', 'admin')
+                'total_customers' => User::where('role', 'customer')->count(),
+                'new_customers_this_month' => User::where('role', 'customer')
                     ->whereMonth('created_at', now()->month)
                     ->whereYear('created_at', now()->year)
                     ->count(),
-                'customers_with_orders' => User::where('role', '!=', 'admin')
+                'customers_with_orders' => User::where('role', 'customer')
                     ->whereHas('orders')
                     ->count(),
-                'customers_with_active_carts' => User::where('role', '!=', 'admin')
+                'customers_with_active_carts' => User::where('role', 'customer')
                     ->whereHas('cartItems')
                     ->count(),
                 'average_order_value' => Order::avg('total_amount') ?? 0,

@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tenants', function (Blueprint $table) {
+        Schema::create('plans', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('slug')->unique();
-            $table->string('phone number')->nullable();
-            // $table->integer('user_id')->unsigned()->nullable();
-                // $table->foreignId('user_id')->constrained()->onDelete('cascade');
-                
-
+            $table->decimal('price', 10, 2);
+            $table->integer('duration_months');
+            $table->text('features')->nullable();
+            $table->enum('billing_cycle', ['monthly', 'yearly'])->default('monthly');
             $table->timestamps();
         });
     }
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tenants');
+        Schema::dropIfExists('plans');
     }
 };
