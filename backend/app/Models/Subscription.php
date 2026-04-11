@@ -8,26 +8,24 @@ use Illuminate\Database\Eloquent\Model;
 class Subscription extends Model
 {
     use HasFactory;
+
+    // Remove the { that was here
+    protected $fillable = [
+        'plan_id',
+        'tenant_id',
+        'status',
+        'starts_at',
+        'ends_at',
+        'canceled_at',
+    ];
+
+    public function tenant()
     {
-        protected $fillable = [
-            'plan_id',
-            'tenant_id',
-            'status',
-            'starts_at',
-            'ends_at',
-            'canceled_at',
-        ];
+        return $this->belongsTo(Tenant::class);
     }
 
- public function tenant()
-{
-    return $this->belongsTo(Tenant::class);
-}
-
-public function plan()
-{
-    return $this->belongsTo(Plan::class);
-}
-
-
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class);
+    }
 }

@@ -9,81 +9,74 @@ class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        $tenantId = DB::table('tenants')->value('id') ?? DB::table('tenants')->insertGetId([
-            'name' => 'Bloomcart Main Store',
-            'slug' => 'main-store',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
         $categories = [
             [
-                'slug' => 'flowers',
-                'image_url' => '/images/categories/flowers.jpg',
+                'slug' => 'skincare',
+                'image_url' => '/images/categories/skincare.jpg',
                 'translations' => [
                     'en' => [
-                        'name' => 'Flowers',
-                        'description' => 'Beautiful fresh flowers for every occasion',
+                        'name' => 'Skincare',
+                        'description' => 'Premium cleansers, moisturizers, and facial treatments',
                     ],
                     'ar' => [
-                        'name' => 'الزهور',
-                        'description' => 'زهور طازجة جميلة لكل المناسبات',
+                        'name' => 'العناية بالبشرة',
+                        'description' => 'منظفات فاخرة، مرطبات، وعلاجات للوجه',
                     ],
                 ],
             ],
             [
-                'slug' => 'gift-boxes',
-                'image_url' => '/images/categories/gift-boxes.jpg',
+                'slug' => 'makeup',
+                'image_url' => '/images/categories/makeup.jpg',
                 'translations' => [
                     'en' => [
-                        'name' => 'Gift Boxes',
-                        'description' => 'Curated gift boxes for special moments',
+                        'name' => 'Makeup',
+                        'description' => 'Professional cosmetics for face, eyes, and lips',
                     ],
                     'ar' => [
-                        'name' => 'صناديق الهدايا',
-                        'description' => 'صناديق هدايا مختارة للحظات الخاصة',
+                        'name' => 'المكياج',
+                        'description' => 'مستحضرات تجميل احترافية للوجه والعيون والشفاه',
                     ],
                 ],
             ],
             [
-                'slug' => 'chocolates',
-                'image_url' => '/images/categories/chocolates.jpg',
+                'slug' => 'hair-care',
+                'image_url' => '/images/categories/hair-care.jpg',
                 'translations' => [
                     'en' => [
-                        'name' => 'Chocolates',
-                        'description' => 'Premium chocolates and sweet treats',
+                        'name' => 'Hair Care',
+                        'description' => 'Shampoos, conditioners, and styling products',
                     ],
                     'ar' => [
-                        'name' => 'الشوكولاتة',
-                        'description' => 'شوكولاتة فاخرة وحلويات لذيذة',
+                        'name' => 'العناية بالشعر',
+                        'description' => 'شامبو، بلسم، ومنتجات تصفيف الشعر',
                     ],
                 ],
             ],
             [
-                'slug' => 'perfumes',
-                'image_url' => '/images/categories/perfumes.jpg',
+                'slug' => 'fragrances',
+                'image_url' => '/images/categories/fragrances.jpg',
                 'translations' => [
                     'en' => [
-                        'name' => 'Perfumes',
-                        'description' => 'Luxury fragrances for him and her',
+                        'name' => 'Fragrances',
+                        'description' => 'Luxury perfumes and essential oil blends',
                     ],
                     'ar' => [
                         'name' => 'العطور',
-                        'description' => 'عطور فاخرة للرجال والنساء',
+                        'description' => 'عطور فاخرة ومزيج من الزيوت العطرية',
                     ],
                 ],
             ],
             [
-                'slug' => 'accessories',
-                'image_url' => '/images/categories/accessories.jpg',
+                'slug' => 'bath-body',
+                'image_url' => '/images/categories/bath-body.jpg',
                 'translations' => [
                     'en' => [
-                        'name' => 'Accessories',
-                        'description' => 'Elegant accessories and decorative items',
+                        'name' => 'Bath & Body',
+                        'description' => 'Relaxing bath salts, scrubs, and body lotions',
                     ],
                     'ar' => [
-                        'name' => 'الإكسسوارات',
-                        'description' => 'إكسسوارات أنيقة وقطع ديكور',
+                        'name' => 'الاستحمام والجسم',
+                        'description' => 'أملاح الاستحمام المريحة، المقشرات، ولوشن الجسم',
                     ],
                 ],
             ],
@@ -91,7 +84,6 @@ class CategorySeeder extends Seeder
 
         foreach ($categories as $categoryData) {
             $categoryId = DB::table('categories')->insertGetId([
-                'tenant_id' => $tenantId,
                 'slug' => $categoryData['slug'],
                 'image_url' => $categoryData['image_url'],
                 'created_at' => now(),

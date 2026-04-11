@@ -10,7 +10,7 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+    protected $fillable = [ 
         'slug',
         'image_url',
     ];
@@ -20,13 +20,13 @@ class Category extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * Get the translations for this category.
-     */
     public function translations(): HasMany
     {
         return $this->hasMany(CategoryTranslation::class);
     }
+
+     
+   
 
     /**
      * Get the subcategories for this category.
@@ -36,17 +36,16 @@ class Category extends Model
         return $this->hasMany(Subcategory::class);
     }
 
-    /**
-     * Get the products for this category through subcategories.
-     */
+  
     public function products()
     {
         return $this->hasManyThrough(Product::class, Subcategory::class);
     }
 
-    /**
-     * Get translation for specific locale
-     */
+     
+   
+
+
     public function translate($locale = 'en')
     {
         // Use loaded relationship if available to avoid N+1 queries
@@ -67,10 +66,6 @@ class Category extends Model
 
 
 
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
     /**
      * 
      * Get description for specific locale

@@ -1,13 +1,17 @@
 import { ReactNode } from 'react';
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
 
 type Props = {
   children: ReactNode;
 };
 
-// Root Layout MUST contain html and body tags
 export default function RootLayout({ children }: Props) {
   return (
-    <html lang="en">
+    <html className={cn("font-sans", geist.variable)}>
       <body>
         {children}
       </body>

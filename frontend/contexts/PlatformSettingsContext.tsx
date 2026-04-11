@@ -38,14 +38,14 @@ interface PlatformSettingsContextType {
 }
 
 const defaultSettings: PlatformSettings = {
-  platform_name: 'BloomCart',
-  platform_name_ar: 'بلوم كارت',
+  platform_name: 'Zeina',
+  platform_name_ar: 'zna',
   platform_tagline: 'Premium Flowers & Gifts Delivery',
-  platform_tagline_ar: 'توصيل الأزهار والهدايا المميزة',
+  platform_tagline_ar: ' Flowers & Gifts Delivery',
   platform_logo: '',
   platform_logo_dark: '',
   use_logo_instead_of_text: 'false',
-  primary_color: '#1f2937',
+  primary_color: '#050505',
   secondary_color: '#f59e0b',
   accent_color: '#ef4444',
   success_color: '#10b981',
@@ -55,7 +55,7 @@ const defaultSettings: PlatformSettings = {
   footer_background: '#ffffff',
   body_background: '#f9fafb',
   contact_phone: '+966 50 123 4567',
-  contact_email: 'info@bloomcart.sa',
+  contact_email: 'info@zeina.sa',
   contact_address: 'Riyadh, Saudi Arabia',
   contact_address_ar: 'الرياض، المملكة العربية السعودية'
 };

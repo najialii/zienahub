@@ -39,7 +39,7 @@ export default function ContactPage() {
     {
       icon: Mail,
       title: locale === 'ar' ? 'راسلنا' : 'Email Us',
-      details: ['info@bloomcart.sa', 'support@bloomcart.sa'],
+      details: ['info@zeina.sa', 'support@zeina.sa'],
       description: locale === 'ar' ? 'نرد خلال ساعتين' : 'We reply within 2 hours'
     },
     {

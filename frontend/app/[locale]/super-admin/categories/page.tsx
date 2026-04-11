@@ -89,7 +89,6 @@ export default function CategoriesPage() {
         return;
       }
 
-      // Fetch categories
       const categoriesResponse = await fetch(`${API_BASE_URL}/admin/categories`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -97,7 +96,8 @@ export default function CategoriesPage() {
         },
       });
 
-      // Fetch subcategories
+
+      console.log("asadasdsfadsfd",categoriesResponse)
       const subcategoriesResponse = await fetch(`${API_BASE_URL}/admin/subcategories`, {
         headers: {
           'Authorization': `Bearer ${token}`,

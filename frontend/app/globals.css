@@ -20,7 +20,7 @@
 
 /* CSS Custom Properties for Dynamic Theming */
 :root {
-  --color-primary: #1f2937;
+  --color-primary: #050505;
   --color-secondary: #f59e0b;
   --color-accent: #ef4444;
   --color-success: #10b981;
@@ -200,8 +200,7 @@ body {
 
 :root {
   /* Monochrome - Black, White, Gray */
-  --color-primary: #000000; /* Pure black */
-  --color-primary-dark: #000000;
+  --color-primary-dark: #050505;
   --color-gray-light: #F5F5F5;
   --color-gray-medium: #A3A3A3;
   --color-gray-dark: #404040;

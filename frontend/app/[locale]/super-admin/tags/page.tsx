@@ -154,6 +154,7 @@ export default function AdminTagsPage() {
         body: JSON.stringify(formData),
       });
 
+      console.log("dfdfdfdfd",formData)
       if (response.ok) {
         fetchTags();
         resetForm();

@@ -61,7 +61,9 @@ export default function AuthCallbackPage() {
         console.log('✅ User stored in Zustand');
 
         // Redirect based on role
-        if (data.data.user.role === 'admin') {
+        if (data.data.user.role === 'super_admin') {
+          router.push(`/${locale}/super-admin`);
+        } else if (data.data.user.role === 'tenant_admin' || data.data.user.role === 'admin') {
           router.push(`/${locale}/admin`);
         } else {
           router.push(`/${locale}/account`);

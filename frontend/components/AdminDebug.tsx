@@ -29,7 +29,7 @@ export default function AdminDebug() {
             <strong className="text-green-400">Auth Status:</strong>
             <div className="ml-2">
               <div>Logged In: {isLoggedIn ? '✅ Yes' : '❌ No'}</div>
-              <div>Is Admin: {profile?.role === 'admin' ? '✅ Yes' : '❌ No'}</div>
+              <div>Is Tenant Admin: {profile?.role === 'tenant_admin' || profile?.role === 'admin' ? '✅ Yes' : '❌ No'}</div>
             </div>
           </div>
 
@@ -44,7 +44,7 @@ export default function AdminDebug() {
             <strong className="text-yellow-400">LocalStorage:</strong>
             <pre className="ml-2 text-xs overflow-auto">
               {typeof window !== 'undefined' 
-                ? localStorage.getItem('bloomcart-user')?.substring(0, 200) + '...'
+                ? localStorage.getItem('zeina-user')?.substring(0, 200) + '...'
                 : 'N/A'}
             </pre>
           </div>
@@ -64,7 +64,7 @@ export default function AdminDebug() {
               <button
                 onClick={() => {
                   console.log('User Store:', useUserStore.getState());
-                  console.log('LocalStorage:', localStorage.getItem('bloomcart-user'));
+                  console.log('LocalStorage:', localStorage.getItem('zeina-user'));
                 }}
                 className="block w-full text-left px-2 py-1 bg-blue-600 hover:bg-blue-700 transition-colors"
               >

@@ -39,7 +39,7 @@ export default function SameDayDelivery() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            {locale === 'en' ? 'Why Choose BloomCart?' : 'لماذا تختار بلوم كارت؟'}
+            {locale === 'en' ? 'Why Choose Zeina?' : 'لماذا تختار Zeina?'}
           </h2>
           <p className="text-neutral-600 text-lg">
             {locale === 'en' ? 'Premium service for every occasion' : 'خدمة مميزة لكل مناسبة'}

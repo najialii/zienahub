@@ -60,6 +60,14 @@ class Tag extends Model
         return $this->belongsToMany(Product::class);
     }
 
+
+      
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    
     /**
      * Scope to get only active tags.
      */

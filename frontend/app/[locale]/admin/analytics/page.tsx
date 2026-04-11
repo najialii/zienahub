@@ -148,7 +148,7 @@ export default function AnalyticsPage() {
     const csvRows = [];
     
     // Header
-    csvRows.push('BloomCart Analytics Report');
+    csvRows.push('Zeina Analytics Report');
     csvRows.push(`Generated: ${new Date().toLocaleString()}`);
     csvRows.push(`Period: ${periodLabels[period]}`);
     csvRows.push('');
@@ -524,7 +524,7 @@ export default function AnalyticsPage() {
 
       {/* Report Footer */}
       <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-100">
-        Generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()} • BloomCart Analytics
+        Generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()} &bull; Zeina Analytics
       </div>
     </div>
   );

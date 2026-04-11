@@ -74,6 +74,11 @@ class Product extends Model
     }
 
 
+
+    public function productimg ()
+    {
+        return this->hasMany(productimg::class);
+    }
     
     public function tenant()
     {

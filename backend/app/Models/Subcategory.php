@@ -42,11 +42,7 @@ class Subcategory extends Model
 
 
   
-    
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
+  
 
     /**
      * Get the translations for this subcategory.

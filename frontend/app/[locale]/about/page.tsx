@@ -56,7 +56,7 @@ export default function AboutPage() {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-2xl md:text-3xl font-light mb-3 tracking-tight">
-                {locale === 'ar' ? 'من نحن' : 'About BloomCart'}
+                {locale === 'ar' ? 'من نحن' : 'About Zeina'}
               </h1>
               <p className="text-sm md:text-base text-neutral-300 leading-relaxed">
                 {locale === 'ar'

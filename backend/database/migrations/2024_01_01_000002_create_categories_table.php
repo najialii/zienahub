@@ -12,12 +12,10 @@ return new class extends Migration
             $table->id();
             $table->string('slug')->unique();
             $table->string('image_url')->nullable();
-            $table->timestamps();
-            $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->index('slug');
+            $table->timestamps();
         });
         
-        // Translations table for categories
         Schema::create('category_translations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained()->onDelete('cascade');

@@ -8,7 +8,7 @@ import { Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useUserStore } from '@/lib/userStore';
-
+import Image from 'next/image';
 export default function SignupPage() {
   const locale = useLocale();
   const router = useRouter();
@@ -115,8 +115,14 @@ export default function SignupPage() {
           {/* Card */}
           <div className="bg-white rounded-lg shadow-lg p-8">
             {/* Header */}
-            <div className="text-center mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-2">
+ <div className='flex flex-col items-center justify-center gap-4'>
+                <Image
+                  src="/zlogo.svg"
+                  alt={locale === 'ar' ? 'زينا' : 'Zeina'}
+                  width={400}
+                  height={60}
+                  className="h-20 w-auto"
+                />                <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-2">
                 {locale === 'en' ? 'Create Account' : 'إنشاء حساب'}
               </h1>
               <p className="text-neutral-600 text-sm">

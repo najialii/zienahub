@@ -68,7 +68,7 @@ class ProductController extends Controller
     {
         $locale = $request->header('Accept-Language', 'en');
         
-        $product = Product::with(['subcategory.category'])->findOrFail($id);
+        $product = Product::with(['subcategory.category', 'productimg'])->findOrFail($id);
 
         return response()->json([
             'id' => $product->id,
@@ -116,6 +116,7 @@ class ProductController extends Controller
             'stock_quantity' => $product->stock_quantity,
             'image_url' => $product->image_url ? url($product->image_url) : null,
             'status' => $product->status,
+            'tenant_id'=> $product->tenant_id,
             'subcategory_id' => $product->subcategory_id,
             'created_at' => $product->created_at,
             'updated_at' => $product->updated_at,

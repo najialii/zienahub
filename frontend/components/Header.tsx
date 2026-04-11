@@ -3,20 +3,24 @@
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingBasket, Heart, User, Menu, X, LayoutDashboard } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, ShoppingBag, Heart, User, Menu, X, LayoutDashboard } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useCartStore } from '@/lib/cartStore';
 import { useUserStore } from '@/lib/userStore';
 import { useWishlistStore } from '@/lib/wishlistStore';
 import { usePlatformSettings } from '@/contexts/PlatformSettingsContext';
 import { usePlatformRefresh } from '@/hooks/usePlatformRefresh';
-import { productsApi } from '@/lib/api';
+import { searchProducts } from '@/app/[locale]/actions';
 import type { Product } from '@/lib/types';
 import Image from 'next/image';
 import Price from './Price';
 
-export default function Header() {
+interface HeaderProps {
+  authToken?: string | null;
+}
+
+export default function Header({ authToken: initialAuthToken }: HeaderProps) {
   const t = useTranslations('nav');
   const locale = useLocale();
   const pathname = usePathname();
@@ -36,22 +40,27 @@ export default function Header() {
   const { openWishlist, getTotalItems: getWishlistTotal } = useWishlistStore();
   const { profile, isLoggedIn } = useUserStore();
   const { getSetting } = usePlatformSettings();
-  usePlatformRefresh(); // This will listen for settings updates
+  usePlatformRefresh(); 
   const totalItems = getTotalItems();
   const wishlistTotal = getWishlistTotal();
-  const isAdmin = profile?.role === 'admin';
+  const isTenantAdmin = profile?.role === 'tenant_admin' || profile?.role === 'admin';
+  const isSuperAdmin = profile?.role === 'super_admin';
 
   useEffect(() => {
     setMounted(true);
+    
+    // Set auth token in localStorage if provided from server
+    if (initialAuthToken && typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', initialAuthToken);
+    }
     
     // Fetch wishlist from backend if user is logged in
     const token = localStorage.getItem('auth_token');
     if (token) {
       useWishlistStore.getState().fetchWishlist();
     }
-  }, []);
+  }, [initialAuthToken]);
 
-  // Handle click outside to close suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -63,75 +72,65 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch desktop search suggestions
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (searchQuery.trim().length < 2) {
+  const fetchSuggestions = useCallback(async (query: string) => {
+    if (query.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const result = await searchProducts(query, locale as 'en' | 'ar');
+      if (result.success && result.products) {
+        setSuggestions(result.products);
+        setShowSuggestions(result.products.length > 0);
+      } else {
         setSuggestions([]);
-        setShowSuggestions(false);
-        return;
       }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      setSuggestions([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [locale]);
 
-      setIsSearching(true);
-      try {
-        const results = await productsApi.getAll(locale as 'en' | 'ar');
-        const filtered = results
-          .filter((product: Product) => {
-            const searchLower = searchQuery.toLowerCase();
-            const nameMatch = product.name?.toLowerCase().includes(searchLower);
-            const descMatch = product.description?.toLowerCase().includes(searchLower);
-            const categoryMatch = product.category?.name?.toLowerCase().includes(searchLower);
-            return nameMatch || descMatch || categoryMatch;
-          })
-          .slice(0, 5);
-        
-        setSuggestions(filtered);
-        setShowSuggestions(filtered.length > 0);
-      } catch (error) {
-        console.error('Error fetching suggestions:', error);
-        setSuggestions([]);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(fetchSuggestions, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery, locale]);
-
-  // Fetch mobile search suggestions
   useEffect(() => {
-    const fetchMobileSuggestions = async () => {
-      if (mobileSearchQuery.trim().length < 2) {
-        setMobileSuggestions([]);
-        return;
-      }
-
-      setIsMobileSearching(true);
-      try {
-        const results = await productsApi.getAll(locale as 'en' | 'ar');
-        const filtered = results
-          .filter((product: Product) => {
-            const searchLower = mobileSearchQuery.toLowerCase();
-            const nameMatch = product.name?.toLowerCase().includes(searchLower);
-            const descMatch = product.description?.toLowerCase().includes(searchLower);
-            const categoryMatch = product.category?.name?.toLowerCase().includes(searchLower);
-            return nameMatch || descMatch || categoryMatch;
-          })
-          .slice(0, 5);
-        
-        setMobileSuggestions(filtered);
-      } catch (error) {
-        console.error('Error fetching mobile suggestions:', error);
-        setMobileSuggestions([]);
-      } finally {
-        setIsMobileSearching(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(fetchMobileSuggestions, 300);
+    const debounceTimer = setTimeout(() => {
+      fetchSuggestions(searchQuery);
+    }, 300);
     return () => clearTimeout(debounceTimer);
-  }, [mobileSearchQuery, locale]);
+  }, [searchQuery, fetchSuggestions]);
+
+  const fetchMobileSuggestions = useCallback(async (query: string) => {
+    if (query.trim().length < 2) {
+      setMobileSuggestions([]);
+      return;
+    }
+
+    setIsMobileSearching(true);
+    try {
+      const result = await searchProducts(query, locale as 'en' | 'ar');
+      if (result.success && result.products) {
+        setMobileSuggestions(result.products);
+      } else {
+        setMobileSuggestions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching mobile suggestions:', error);
+      setMobileSuggestions([]);
+    } finally {
+      setIsMobileSearching(false);
+    }
+  }, [locale]);
+
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      fetchMobileSuggestions(mobileSearchQuery);
+    }, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [mobileSearchQuery, fetchMobileSuggestions]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,23 +163,48 @@ export default function Header() {
   };
 
   return (
+    <>
+
+   <div className="relative overflow-hidden bg-neutral-900 py-2.5">
+  <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-transparent to-violet-500/10 opacity-50" />
+  
+  <div className="container mx-auto px-4">
+    <div className="flex items-center justify-center gap-3 text-white">
+      {/* <span className="hidden md:inline-block rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border border-white/20">
+        Special Offer
+      </span>
+       */}
+      <h2 className="text-center text-sm font-medium tracking-wide">
+        {/* Arabic Text */}
+        <span className="font-bold text-pink-400">خصم 20٪</span> على طلبك الأول باستخدام كود: 
+        <span className="mx-1.5 rounded bg-white px-2 py-0.5 font-mono font-bold text-neutral-900">
+          NEW20
+        </span>
+      </h2>
+
+      {/* <span className="animate-pulse text-xs">✨</span> */}
+    </div>
+  </div>
+</div>
+
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-neutral-100">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-2 md:px-4">
         {/* Top Bar */}
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
           <Link href={`/${locale}`} className="flex items-center gap-2 group flex-shrink-0">
-            {getSetting('use_logo_instead_of_text') === 'true' && getSetting('platform_logo') ? (
-              <img 
-                src={getSetting('platform_logo')} 
-                alt={locale === 'ar' ? getSetting('platform_name_ar', 'بلوم كارت') : getSetting('platform_name', 'BloomCart')}
-                className="h-8 w-auto"
-              />
-            ) : (
-              <div className="text-2xl font-semibold tracking-tight" style={{ color: getSetting('primary_color', '#1f2937') }}>
-                {locale === 'ar' ? getSetting('platform_name_ar', 'بلوم كارت') : getSetting('platform_name', 'BloomCart')}
-              </div>
-            )}
+            <Image
+              src="/zlogo.svg"
+              alt={locale === 'ar' ? 'زينا' : 'Zeina'}
+              width={400}
+              height={60}
+              className="h-20 w-auto"
+            />
+            {/* <div className="text-2xl font-semibold tracking-tight" style={{ color: getSetting('primary_color', '#1f2937') }}>
+              {locale === 'ar'
+                ? getSetting('platform_name_ar', 'زينا')
+                : getSetting('platform_name', 'Ziena')}
+            </div> */}
           </Link>
 
           {/* Search Bar */}
@@ -258,56 +282,51 @@ export default function Header() {
             </form>
           </div>
 
-          {/* Desktop Navigation */}
    
-          {/* Right Section */}
           <div className="flex items-center gap-2">
-            {/* User Links (Desktop) */}
             <div className="hidden md:flex items-center gap-1 flex-shrink-0">
-              {/* Cart Button - Opens Modal */}
               <button
                 onClick={openCart}
                 className="relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
                 title={t('cart')}
               >
-                <ShoppingBasket className="w-5 h-5" />
+                <ShoppingBag className="w-5 h-5" />
                 {mounted && totalItems > 0 && (
                   <span className="absolute -top-1 -right-1 bg-neutral-900 text-white text-xs w-5 h-5 flex items-center justify-center font-bold rounded-full shadow-md">
                     {totalItems}
                   </span>
                 )}
-                <span className="hidden lg:inline text-sm">{t('cart')}</span>
+                {/* <span className="hidden lg:inline text-sm">{t('cart')}</span> */}
               </button>
 
-              {/* Wishlist */}
               <button
                 onClick={openWishlist}
                 className="relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
-                title={t('wishlist')}
+                // title={t('wishlist')}
               >
                 <Heart className="w-5 h-5" />
                 {mounted && wishlistTotal > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center font-bold rounded-full shadow-md">
+                  <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-5 h-5 flex items-center justify-center font-bold rounded-full shadow-md">
                     {wishlistTotal}
                   </span>
                 )}
-                <span className="hidden lg:inline text-sm">{t('wishlist')}</span>
+                {/* <span className="hidden lg:inline text-sm">{t('wishlist')}</span> */}
               </button>
 
               {/* Admin Dashboard (Admin Only) */}
-              {mounted && isAdmin && (
+              {mounted && (isTenantAdmin || isSuperAdmin) && (
                 <Link
-                  href={`/${locale}/admin`}
+                  href={`/${locale}/${isSuperAdmin ? 'super-admin' : 'admin'}`}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
                   title="Admin Dashboard"
                 >
                   <LayoutDashboard className="w-5 h-5" />
-                  <span className="hidden lg:inline text-sm">Admin</span>
+                  <span className="hidden lg:inline text-sm">{isSuperAdmin ? 'Super Admin' : 'Admin'}</span>
                 </Link>
               )}
 
-              {/* Account or Sign In */}
-              {mounted && isLoggedIn ? (
+              {/* My Account (Regular users only, not admins) */}
+              {mounted && isLoggedIn && !(isTenantAdmin || isSuperAdmin) ? (
                 <Link
                   href={`/${locale}/account`}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
@@ -316,7 +335,7 @@ export default function Header() {
                   <User className="w-5 h-5" />
                   <span className="hidden lg:inline text-sm">{t('account')}</span>
                 </Link>
-              ) : (
+              ) : mounted && !isLoggedIn ? (
                 <Link
                   href={`/${locale}/login`}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
@@ -325,7 +344,7 @@ export default function Header() {
                   <User className="w-5 h-5" />
                   <span className="hidden lg:inline text-sm">{locale === 'en' ? 'Sign In' : 'دخول'}</span>
                 </Link>
-              )}
+              ) : null}
             </div>
 
             {/* Mobile Icons */}
@@ -345,7 +364,7 @@ export default function Header() {
                 className="relative p-2 hover:bg-neutral-50 rounded-lg transition-colors"
                 aria-label="Cart"
               >
-                <ShoppingBasket className="w-5 h-5 text-neutral-700" />
+                <ShoppingBag className="w-5 h-5 text-neutral-700" />
                 {mounted && totalItems > 0 && (
                   <span className="absolute top-0 right-0 bg-neutral-900 text-white text-xs w-4 h-4 flex items-center justify-center font-bold rounded-full">
                     {totalItems}
@@ -410,20 +429,20 @@ export default function Header() {
                         <span>{t('wishlist')}</span>
                       </div>
                       {mounted && wishlistTotal > 0 && (
-                        <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+                        <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full font-semibold">
                           {wishlistTotal}
                         </span>
                       )}
                     </button>
 
-                    {mounted && isAdmin && (
+                    {mounted && (isTenantAdmin || isSuperAdmin) && (
                       <Link
-                        href={`/${locale}/admin`}
+                        href={`/${locale}/${isSuperAdmin ? 'super-admin' : 'admin'}`}
                         className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <LayoutDashboard className="w-5 h-5" />
-                        <span>Admin Dashboard</span>
+                        <span>{isSuperAdmin ? 'Super Admin Dashboard' : 'Admin Dashboard'}</span>
                       </Link>
                     )}
                   </div>
@@ -567,5 +586,6 @@ export default function Header() {
         )}
       </div>
     </header>
+    </>
   );
 }

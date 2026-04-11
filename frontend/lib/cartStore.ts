@@ -370,7 +370,7 @@ export const useCartStore = create<CartStore>()(
       },
     }),
     {
-      name: 'bloomcart-storage',
+      name: 'zeina-storage',
       version: 2,
       migrate: (persistedState: any, version: number) => {
         // Clean up any items without productId

@@ -15,11 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->string('phone number')->nullable();
-            // $table->integer('user_id')->unsigned()->nullable();
-                // $table->foreignId('user_id')->constrained()->onDelete('cascade');
-                
-
+            $table->string('phone_number')->nullable();
+            $table->string('logo')->nullable();
+            $table->string('address')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('featured')->default(false);
+            $table->string('cover_image')->nullable();
             $table->timestamps();
         });
     }

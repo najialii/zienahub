@@ -13,14 +13,14 @@ class PlatformSettingSeeder extends Seeder
             // Branding Settings
             [
                 'key' => 'platform_name',
-                'value' => 'BloomCart',
+                'value' => 'Zeina',
                 'type' => 'string',
                 'group' => 'branding',
                 'description' => 'Platform name displayed across the site'
             ],
             [
                 'key' => 'platform_name_ar',
-                'value' => 'بلوم كارت',
+                'value' => 'zna',
                 'type' => 'string',
                 'group' => 'branding',
                 'description' => 'Platform name in Arabic'

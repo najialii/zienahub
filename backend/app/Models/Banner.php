@@ -38,25 +38,18 @@ class Banner extends Model
         'sort_order' => 'integer',
     ];
 
-    /**
-     * Get the title for a specific locale
-     */
+    
     public function getTitle($locale = 'en')
     {
         return $this->{"title_$locale"} ?? $this->title_en;
     }
 
-    /**
-     * Get the description for a specific locale
-     */
+   
     public function getDescription($locale = 'en')
     {
         return $this->{"description_$locale"} ?? $this->description_en;
     }
 
-    /**
-     * Get the link text for a specific locale
-     */
     public function getLinkText($locale = 'en')
     {
         return $this->{"link_text_$locale"} ?? $this->link_text_en;

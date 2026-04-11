@@ -230,7 +230,7 @@ export const useWishlistStore = create<WishlistStore>()(
       },
     }),
     {
-      name: 'bloomcart-wishlist',
+      name: 'zeina-wishlist',
     }
   )
 );

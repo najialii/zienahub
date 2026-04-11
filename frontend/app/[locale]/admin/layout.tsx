@@ -35,35 +35,31 @@ export default function AdminLayout({
   const pathname = usePathname();
   const params = useParams<{ locale: string }>();
   const locale = params?.locale || 'en';
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false); 
   const [mounted, setMounted] = useState(false);
   const { profile, isLoggedIn, logout } = useUserStore();
   const { getSetting } = usePlatformSettings();
-  usePlatformRefresh(); // This will listen for settings updates
-  const isAdmin = profile?.role === 'admin';
+  usePlatformRefresh(); 
+  const isAdmin = profile?.role === 'tenant_admin' || profile?.role === 'admin';
 
   useEffect(() => {
     setMounted(true);
     
-    // Set sidebar open by default on desktop
     const handleResize = () => {
-      if (window.innerWidth >= 1024) { // lg breakpoint
+      if (window.innerWidth >= 1024) { 
         setSidebarOpen(true);
       } else {
         setSidebarOpen(false);
       }
     };
     
-    // Set initial state
     handleResize();
     
-    // Listen for resize events
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
-    // Check if user is admin after mount
     if (mounted && (!isLoggedIn || !isAdmin)) {
       console.log('Admin access denied. Redirecting to login...', { isLoggedIn, isAdmin, profile });
       router.push(`/${locale}/login`);
@@ -75,7 +71,7 @@ export default function AdminLayout({
     router.push(`/${locale}/login`);
   };
 
-  // Show loading state while checking authentication
+
   if (!mounted) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
@@ -87,7 +83,6 @@ export default function AdminLayout({
     );
   }
 
-  // Redirect if not authorized
   if (!isLoggedIn || !isAdmin) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
@@ -119,21 +114,7 @@ export default function AdminLayout({
       href: `/${locale}/admin/customers`, 
       icon: Users 
     },
-    { 
-      name: locale === 'ar' ? 'الفئات' : 'Categories', 
-      href: `/${locale}/admin/categories`, 
-      icon: Tag 
-    },
-    { 
-      name: locale === 'ar' ? 'العلامات' : 'Tags', 
-      href: `/${locale}/admin/tags`, 
-      icon: Hash 
-    },
-    { 
-      name: locale === 'ar' ? 'البانرات' : 'Banners', 
-      href: `/${locale}/admin/banners`, 
-      icon: Image 
-    },
+
     // { 
     //   name: locale === 'ar' ? 'تخطيط الصفحة الرئيسية' : 'Home Layout', 
     //   href: `/${locale}/admin/home-layout`, 
@@ -144,16 +125,16 @@ export default function AdminLayout({
       href: `/${locale}/admin/promo-codes`, 
       icon: Gift 
     },
-    { 
-      name: locale === 'ar' ? 'موظفو التوصيل' : 'Delivery Personnel', 
-      href: `/${locale}/admin/delivery`, 
-      icon: Truck 
-    },
-    { 
-      name: locale === 'ar' ? 'إشعارات التوصيل' : 'Delivery Notifications', 
-      href: `/${locale}/admin/delivery-notifications`, 
-      icon: MessageCircle 
-    },
+    // { 
+    //   name: locale === 'ar' ? 'موظفو التوصيل' : 'Delivery Personnel', 
+    //   href: `/${locale}/admin/delivery`, 
+    //   icon: Truck 
+    // },
+    // { 
+    //   name: locale === 'ar' ? 'إشعارات التوصيل' : 'Delivery Notifications', 
+    //   href: `/${locale}/admin/delivery-notifications`, 
+    //   icon: MessageCircle 
+    // },
     { 
       name: locale === 'ar' ? 'التحليلات' : 'Analytics', 
       href: `/${locale}/admin/analytics`, 
@@ -196,12 +177,12 @@ export default function AdminLayout({
             {getSetting('use_logo_instead_of_text') === 'true' && getSetting('platform_logo_dark') ? (
               <img 
                 src={getSetting('platform_logo_dark')} 
-                alt={locale === 'ar' ? getSetting('platform_name_ar', 'بلوم كارت') : getSetting('platform_name', 'BloomCart')}
+                alt={locale === 'ar' ? 'zna' : 'Zeina'}
                 className="h-8 w-auto mb-2"
               />
             ) : (
               <h1 className="text-2xl font-bold pr-8 lg:pr-0">
-                {locale === 'ar' ? getSetting('platform_name_ar', 'بلوم كارت') : getSetting('platform_name', 'BloomCart')}
+                {locale === 'ar' ? 'زينة' : 'Zeina'}
               </h1>
             )}
             <p className="text-sm text-neutral-400 mt-1">{locale === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}</p>
@@ -256,7 +237,7 @@ export default function AdminLayout({
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-sm font-medium">{profile?.name || 'Admin User'}</p>
-                <p className="text-xs text-neutral-500">{profile?.email || 'admin@bloomcart.com'}</p>
+                <p className="text-xs text-neutral-500">{profile?.email || 'admin@zeina.com'}</p>
               </div>
               <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-bold">
                 {profile?.name?.charAt(0) || 'A'}

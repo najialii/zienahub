@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, HelpCircle } from 'lucide-react';
 
 export default function Footer() {
   const t = useTranslations('footer');
@@ -10,12 +10,45 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
+    <>
+
+<div className="bg-primary  px-4 py-12 text-white">
+      <div className="container mx-auto flex flex-col items-center justify-between gap-4 md:flex-row md:gap-0">
+        
+        <div className="flex items-center gap-2">
+          <HelpCircle size={18} className="text-white/80" />
+          <span className="text-sm font-bold uppercase tracking-wider">
+            Need Help?
+          </span>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-6 text-sm font-medium">
+          <a 
+            href="tel:+1234567890" 
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <Phone size={16} className="opacity-70" />
+            <span>+123 456 7890</span>
+          </a>
+          
+          <a 
+            href="mailto:support@example.com" 
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <Mail size={16} className="opacity-70" />
+            <span>support@example.com</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+
     <footer className="bg-white border-t border-neutral-200 mt-auto">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* About Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-light tracking-tight text-neutral-900">BloomCart</h3>
+            <h3 className="text-lg font-light tracking-tight text-neutral-900">Zeina</h3>
             <p className="text-neutral-600 text-xs leading-relaxed">
               {locale === 'ar'
                 ? 'منصة إلكترونية أنيقة للهدايا والزهور. نقدم أجمل الباقات والهدايا المميزة لكل المناسبات.'
@@ -178,19 +211,18 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-3 h-3 text-neutral-500 flex-shrink-0" />
-                <a href="mailto:info@bloomcart.com" className="text-neutral-600 hover:text-neutral-900 text-xs transition-colors duration-200">
-                  info@bloomcart.com
+                <a href="mailto:info@zeina.com" className="text-neutral-600 hover:text-neutral-900 text-xs transition-colors duration-200">
+                  info@zeina.com
                 </a>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div className="mt-8 pt-6 border-t border-neutral-200">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-neutral-500">
-              © {currentYear} BloomCart. {locale === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}.
+              &copy; {currentYear} Zeina. {locale === 'ar' ? ' All rights reserved.' : ' All rights reserved.'}.
             </p>
             <div className="flex gap-6">
               <Link href={`/${locale}/login`} className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors duration-200">
@@ -204,5 +236,6 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+    </>
   );
 }

@@ -8,58 +8,49 @@ use Illuminate\Http\Request;
 class TenantController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Home Page / Discovery
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $tenants = Tenant::query()
+            ->when($request->boolean('featured'), function ($q) {
+                return $q->where('featured', true);
+            })
+            // ->whereNotNull('logo')
+            ->latest()
+            ->paginate(12);
+
+        return response()->json($tenants);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Storefront Detail
      */
-    public function create()
+    public function show($idOrSlug)
     {
-        //
+        $tenant = Tenant::query()
+            ->where(function ($q) use ($idOrSlug) {
+                $q->where('id', $idOrSlug)
+                  ->orWhere('slug', $idOrSlug);
+            })
+            ->withCount('products')
+            ->firstOrFail();
+
+        return response()->json($tenant);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Administrative List
      */
-    public function store(Request $request)
+    public function adminIndex()
     {
-        //
+        // Simple and complete list for your dashboard
+        return response()->json(Tenant::latest()->get());
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Tenant $tenant)
+    public function products(Tenant $tenant)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Tenant $tenant)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Tenant $tenant)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Tenant $tenant)
-    {
-        //
+        // Paginate products for the specific shop page
+        return response()->json($tenant->products()->latest()->paginate(20));
     }
 }

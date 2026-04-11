@@ -8,6 +8,7 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useUserStore } from '@/lib/userStore';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const locale = useLocale();
@@ -56,16 +57,16 @@ export default function LoginPage() {
         console.log('Token stored in localStorage:', token.substring(0, 20) + '...');
         console.log('Verify token in localStorage:', localStorage.getItem('auth_token')?.substring(0, 20) + '...');
         
-        // Store user in Zustand
         console.log('Logging in user:', user);
         login(user);
         
-        // Small delay to ensure state is updated
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Redirect based on role
-        if (user.role === 'admin') {
-          console.log('Redirecting to admin dashboard');
+        if (user.role === 'super_admin') {
+          console.log('Redirecting to super admin dashboard');
+          router.push(`/${locale}/super-admin`);
+        } else if (user.role === 'tenant_admin' || user.role === 'admin') {
+          console.log('Redirecting to tenant admin dashboard');
           router.push(`/${locale}/admin`);
         } else {
           console.log('Redirecting to account page');
@@ -105,24 +106,31 @@ export default function LoginPage() {
           <div className="bg-white rounded-lg shadow-lg p-8">
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-2">
-                {locale === 'en' ? 'Welcome Back' : 'مرحباً بعودتك'}
-              </h1>
-              <p className="text-neutral-600 text-sm">
-                {locale === 'en' ? 'Sign in to your account' : 'سجل الدخول إلى حسابك'}
-              </p>
+              <div className='flex flex-col items-center justify-center gap-4'>
+                <Image
+                  src="/zlogo.svg"
+                  alt={locale === 'ar' ? 'زينا' : 'Zeina'}
+                  width={400}
+                  height={60}
+                  className="h-20 w-auto"
+                />
+                <h1 className="text-2xl md:text-3xl font-bold text-neutral-900">
+                  {locale === 'en' ? 'Welcome Back' : 'مرحباً بعودتك'}
+                </h1>
+
+                <p className="text-neutral-600 text-sm">
+                  {locale === 'en' ? 'Sign in to your account' : 'سجل الدخول إلى حسابك'}
+                </p>
+              </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                 {error}
               </div>
             )}
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Email */}
               <div>
                 <label className="block text-sm font-semibold text-neutral-700 mb-2">
                   {locale === 'en' ? 'Email Address' : 'البريد الإلكتروني'}
@@ -140,7 +148,6 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-semibold text-neutral-700 mb-2">
                   {locale === 'en' ? 'Password' : 'كلمة المرور'}
@@ -165,7 +172,6 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Remember & Forgot */}
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -193,7 +199,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-neutral-200"></div>
@@ -205,7 +210,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Social Login Buttons */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleSocialLogin('Google')}
@@ -231,20 +235,12 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* Sign Up Link */}
             <p className="mt-6 text-center text-sm text-neutral-600">
               {locale === 'en' ? "Don't have an account? " : 'ليس لديك حساب؟ '}
               <Link href={`/${locale}/signup`} className="text-neutral-900 font-semibold hover:underline">
                 {locale === 'en' ? 'Sign up' : 'سجل الآن'}
               </Link>
             </p>
-
-            {/* Test Credentials */}
-            <div className="mt-6 p-3 bg-neutral-50 rounded-lg text-xs text-neutral-600">
-              <p className="font-semibold mb-1">{locale === 'en' ? 'Test Credentials:' : 'بيانات الاختبار:'}</p>
-              <p>Admin: admin@email.com / 11235813nj</p>
-              <p>User: user@email.com / 11235813nj</p>
-            </div>
           </div>
         </div>
       </main>

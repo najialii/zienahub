@@ -206,7 +206,7 @@ class DeliveryPersonnelController extends Controller
 
         $testMessage = "🤖 <b>Test Message</b>\n\n" .
                       "Hello {$deliveryPerson->name}!\n\n" .
-                      "This is a test message from BloomCart delivery system.\n" .
+                      "This is a test message from Zeina delivery system.\n" .
                       "If you receive this, your Telegram integration is working correctly! ✅\n\n" .
                       "Time: " . now()->format('Y-m-d H:i:s');
 

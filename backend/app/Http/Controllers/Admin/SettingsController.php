@@ -115,8 +115,8 @@ class SettingsController extends Controller
     private function getDefaultGeneral(): array
     {
         return [
-            'store_name' => 'BloomCart',
-            'store_email' => 'info@bloomcart.com',
+            'store_name' => 'Zeina',
+            'store_email' => 'info@zeina.sa',
             'store_phone' => '+966 50 123 4567',
             'currency' => 'SAR',
             'language' => 'en',

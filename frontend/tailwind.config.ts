@@ -11,9 +11,9 @@ const config: Config = {
       colors: {
         // Monochrome - Black, White, Gray only
         primary: {
-          DEFAULT: '#000000', // Pure black
-          light: '#262626',
-          dark: '#000000',
+          DEFAULT: '#050505', // Pure black
+          light: '#050505',
+          dark: '#050505',
         },
         secondary: {
           DEFAULT: '#FAFAFA', // Light gray

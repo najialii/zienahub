@@ -1,4 +1,3 @@
-// API Response Types
 
 export interface Category {
   id: number;
@@ -18,6 +17,7 @@ export interface Product {
   sku?: string;
   description?: string;
   price: number;
+  sale_price?: number;
   stock_quantity: number;
   image_url: string;
   category?: {
@@ -50,7 +50,8 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'customer' | 'admin';
+  role: 'customer' | 'tenant_admin' | 'super_admin' | 'admin';
+  tenant_id?: number | null;
   phone?: string;
   created_at?: string;
   updated_at?: string;

@@ -13,22 +13,15 @@ class Tenant extends Model
     protected $fillable = [
         'name',
         'slug',
-        'subscription_plan',
-        'subscription_status',
-        'monthly_price',
-        'max_users',
-        'max_products',
-        'subscription_starts_at',
-        'subscription_ends_at',
+        'phone_number',
+        'logo',
+        'cover_image',
+        'description',
+        'address',
         'is_active',
     ];
 
     protected $casts = [
-        'monthly_price' => 'decimal:2',
-        'max_users' => 'integer',
-        'max_products' => 'integer',
-        'subscription_starts_at' => 'datetime',
-        'subscription_ends_at' => 'datetime',
         'is_active' => 'boolean',
     ];
 

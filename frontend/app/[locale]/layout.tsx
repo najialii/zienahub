@@ -4,14 +4,15 @@ import CartModal from '@/components/CartModal';
 import WishlistModal from '@/components/WishlistModal';
 import ToastContainer from '@/components/ToastContainer';
 import { PlatformSettingsProvider } from '@/contexts/PlatformSettingsContext';
+import WhatsAppFloatingButton from '@/components/whatsapp';
 import '../globals.css';
 
 export const metadata = {
-  title: 'BloomCart - Elegant Gifts & Flowers',
+  title: 'Zeina - Elegant Gifts & Flowers',
   description: 'Discover elegant gifts and beautiful flowers for every occasion',
 };
 
-export default async function RootLayout({
+export default async function LocaleLayout({
   children
 }: {
   children: React.ReactNode;
@@ -19,21 +20,15 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
 
-  // Set direction based on locale
-  const dir = locale === 'ar' ? 'rtl' : 'ltr';
-
   return (
-    <html lang={locale} dir={dir}>
-      <body className="antialiased">
-        <NextIntlClientProvider messages={messages}>
-          <PlatformSettingsProvider>
-            {children}
-            <CartModal />
-            <WishlistModal />
-            <ToastContainer />
-          </PlatformSettingsProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <NextIntlClientProvider messages={messages}>
+      <PlatformSettingsProvider>
+        {children}
+        <CartModal />
+        <WishlistModal />
+        <ToastContainer />
+        <WhatsAppFloatingButton />
+      </PlatformSettingsProvider>
+    </NextIntlClientProvider>
   );
 }

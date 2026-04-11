@@ -1,6 +1,5 @@
-// User state management
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface UserProfile {
   id?: number;
@@ -9,7 +8,8 @@ export interface UserProfile {
   lastName?: string;
   email: string;
   phone?: string;
-  role?: 'customer' | 'admin';
+  role?: 'customer' | 'tenant_admin' | 'super_admin' | 'admin';
+  tenant_id?: number | null;
   address?: {
     street: string;
     city: string;
@@ -22,11 +22,13 @@ export interface UserProfile {
 interface UserStore {
   profile: UserProfile | null;
   isLoggedIn: boolean;
+  _hasHydrated: boolean;
   setProfile: (profile: UserProfile) => void;
   updateProfile: (profile: Partial<UserProfile>) => void;
   clearProfile: () => void;
   login: (profile: UserProfile) => void;
   logout: () => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useUserStore = create<UserStore>()(
@@ -34,6 +36,9 @@ export const useUserStore = create<UserStore>()(
     (set) => ({
       profile: null,
       isLoggedIn: false,
+      _hasHydrated: false,
+
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       setProfile: (profile) => {
         set({ profile, isLoggedIn: true });
@@ -54,7 +59,6 @@ export const useUserStore = create<UserStore>()(
       },
 
       logout: () => {
-        // Clear token from localStorage
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token');
         }
@@ -62,7 +66,11 @@ export const useUserStore = create<UserStore>()(
       },
     }),
     {
-      name: 'bloomcart-user',
+      name: 'zeina-user',
+      storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
