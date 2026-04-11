@@ -157,3 +157,4 @@ For issues or questions, refer to:
 - Laravel Documentation: https://laravel.com/docs/10.x
 - Next.js Documentation: https://nextjs.org/docs
 - Project specifications in `.kiro/specs/bloomcart-ecommerce/`
+# zienahub
