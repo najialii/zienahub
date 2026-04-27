@@ -98,13 +98,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
       
       <main className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
-          {/* Card */}
           <div className="bg-white rounded-lg shadow-lg p-8">
-            {/* Header */}
             <div className="text-center mb-8">
               <div className='flex flex-col items-center justify-center gap-4'>
                 <Image

@@ -79,7 +79,7 @@ class HomeSectionController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255|unique:home_sections,name',
-                'type' => 'required|in:hero_slider,banner,product_row,featured_tags,custom',
+                'type' => 'required|in:hero_slider,banner,product_row,featured_tags,category_scroll,tenant_carousel,featured_subcategories,countdown,testimonials,newsletter,custom',
                 'title_en' => 'nullable|string|max:255',
                 'title_ar' => 'nullable|string|max:255',
                 'description_en' => 'nullable|string',
@@ -121,7 +121,7 @@ class HomeSectionController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255|unique:home_sections,name,' . $id,
-                'type' => 'required|in:hero_slider,banner,product_row,featured_tags,custom',
+                'type' => 'required|in:hero_slider,banner,product_row,featured_tags,category_scroll,tenant_carousel,featured_subcategories,countdown,testimonials,newsletter,custom',
                 'title_en' => 'nullable|string|max:255',
                 'title_ar' => 'nullable|string|max:255',
                 'description_en' => 'nullable|string',

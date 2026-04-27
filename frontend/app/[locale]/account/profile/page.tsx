@@ -79,7 +79,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-neutral-50">
-        <Header />
+        {/* <Header /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mb-4"></div>
@@ -94,7 +94,7 @@ export default function ProfilePage() {
   if (error || !profileData) {
     return (
       <div className="min-h-screen flex flex-col bg-neutral-50">
-        <Header />
+        {/* <Header /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
@@ -138,7 +138,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
+      {/* <Header /> */}
       
       <main className="flex-1 py-8 md:py-12">
         <div className="container mx-auto px-4 max-w-6xl">

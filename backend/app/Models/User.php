@@ -16,8 +16,11 @@ class User extends Authenticatable implements Wallet
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
         'role',
+        'account_type',
+        'profile_completed',
         'tenant_id',
         'google_id',
         'avatar',

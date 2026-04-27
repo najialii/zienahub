@@ -46,18 +46,22 @@ export default function LanguageSwitcher() {
       return;
     }
 
-    startTransition(() => {
-      // Set cookie for persistence
-      document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000`;
-      
-      // Replace the locale in the current pathname
-      const currentPath = pathname || `/${locale}`;
-      const newPath = currentPath.replace(`/${locale}`, `/${newLocale}`);
-      
-      // Navigate to the new locale path
-      router.push(newPath);
-      setIsOpen(false);
-    });
+    // Set cookie for persistence
+    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    
+    // Replace the locale in the current pathname
+    const segments = pathname.split('/').filter(Boolean);
+    
+    // Remove the current locale from segments if it exists
+    if (segments[0] === locale) {
+      segments.shift();
+    }
+    
+    // Build new path with new locale
+    const newPath = `/${newLocale}${segments.length > 0 ? '/' + segments.join('/') : ''}`;
+    
+    // Force a full page reload to apply dir attribute
+    window.location.href = newPath;
   };
 
   return (
@@ -73,7 +77,7 @@ export default function LanguageSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg overflow-hidden z-50">
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg overflow-hidden z-[100]">
           <div className="py-1">
             <button
               onClick={() => switchLanguage('en')}
@@ -106,7 +110,7 @@ export default function LanguageSwitcher() {
       {/* Backdrop to close dropdown */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-[90]"
           onClick={() => setIsOpen(false)}
         />
       )}

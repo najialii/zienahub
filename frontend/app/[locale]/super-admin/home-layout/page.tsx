@@ -49,21 +49,98 @@ export default function HomeLayoutPage() {
   const t = useTranslations('admin');
   const [sections, setSections] = useState<HomeSection[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [tags, setTags] = useState<any[]>([]);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddSection, setShowAddSection] = useState(false);
   const [editingSection, setEditingSection] = useState<HomeSection | null>(null);
+
+  const [formData, setFormData] = useState<Partial<HomeSection>>({
+    name: '',
+    type: 'banner',
+    title_en: '',
+    title_ar: '',
+    description_en: '',
+    description_ar: '',
+    settings: {},
+    is_active: true,
+    sort_order: 0,
+  });
+  const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const sectionTypes = [
     { value: 'hero_slider', label: locale === 'en' ? 'Hero Slider' : 'شريط البطل', icon: Layout },
     { value: 'banner', label: locale === 'en' ? 'Banner Section' : 'قسم البانر', icon: ImageIcon },
     { value: 'product_row', label: locale === 'en' ? 'Product Row' : 'صف المنتجات', icon: Grid },
     { value: 'featured_tags', label: locale === 'en' ? 'Featured Tags' : 'العلامات المميزة', icon: Grid },
+    { value: 'category_scroll', label: locale === 'en' ? 'Category Scroll' : 'التمرير للفئات', icon: Layout },
+    { value: 'tenant_carousel', label: locale === 'en' ? 'Partners Carousel' : 'دوامة الشركاء', icon: Grid },
+    { value: 'featured_subcategories', label: locale === 'en' ? 'Featured Subcategories' : 'الفئات الفرعية المميزة', icon: Grid },
     { value: 'custom', label: locale === 'en' ? 'Custom Section' : 'قسم مخصص', icon: Settings },
   ];
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (editingSection) {
+      setFormData(editingSection);
+    } else if (showAddSection) {
+      setFormData({
+        name: '',
+        type: 'banner',
+        title_en: '',
+        title_ar: '',
+        description_en: '',
+        description_ar: '',
+        settings: {},
+        is_active: true,
+        sort_order: sections.length > 0 ? Math.max(...sections.map(s => s.sort_order)) + 1 : 0,
+      });
+    }
+    setFormError('');
+  }, [editingSection, showAddSection, sections]);
+
+  const handleSave = async () => {
+    try {
+      setFormError('');
+      setIsSubmitting(true);
+      const token = localStorage.getItem('auth_token');
+      
+      const url = editingSection 
+        ? `${API_BASE_URL}/admin/home-sections/${editingSection.id}`
+        : `${API_BASE_URL}/admin/home-sections`;
+        
+      const response = await fetch(url, {
+        method: editingSection ? 'PUT' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.errors) {
+          const firstError = Object.values(errorData.errors)[0] as string[];
+          throw new Error(firstError[0] || 'Validation error');
+        }
+        throw new Error(errorData.message || 'Failed to save section');
+      }
+      
+      setShowAddSection(false);
+      setEditingSection(null);
+      fetchData();
+    } catch (error: any) {
+      setFormError(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -85,6 +162,20 @@ export default function HomeLayoutPage() {
       if (bannersResponse.ok) {
         const bannersResult = await bannersResponse.json();
         setBanners(bannersResult.data || []);
+      }
+
+      // Fetch tags
+      const tagsResponse = await fetch(`${API_BASE_URL}/tags`, { headers });
+      if (tagsResponse.ok) {
+        const tagsResult = await tagsResponse.json();
+        setTags(tagsResult.success && tagsResult.data ? tagsResult.data : []);
+      }
+
+      // Fetch subcategories
+      const subcategoriesResponse = await fetch(`${API_BASE_URL}/admin/subcategories`, { headers });
+      if (subcategoriesResponse.ok) {
+        const subcategoriesResult = await subcategoriesResponse.json();
+        setSubcategories(subcategoriesResult.data || []);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -495,37 +586,257 @@ export default function HomeLayoutPage() {
         </div>
       </div>
 
-      {/* Add/Edit Section Modal - Simplified for now */}
+      {/* Add/Edit Section Modal */}
       {(showAddSection || editingSection) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">
-              {editingSection 
-                ? (locale === 'en' ? 'Edit Section' : 'تعديل القسم')
-                : (locale === 'en' ? 'Add New Section' : 'إضافة قسم جديد')
-              }
-            </h2>
-            <p className="text-gray-600 mb-4">
-              {locale === 'en' 
-                ? 'Section management form will be implemented here with all necessary fields.'
-                : 'سيتم تنفيذ نموذج إدارة الأقسام هنا مع جميع الحقول الضرورية.'
-              }
-            </p>
-            <div className="flex justify-end space-x-2">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">
+                {editingSection 
+                  ? (locale === 'en' ? 'Edit Home Section' : 'تعديل قسم الصفحة الرئيسية')
+                  : (locale === 'en' ? 'Add Home Section' : 'إضافة قسم جديد')
+                }
+              </h2>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {formError && (
+                <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                  {formError}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {locale === 'en' ? 'Internal Name (Unique)' : 'الاسم الداخلي (فريد)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name || ''}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., top_banner_1"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {locale === 'en' ? 'Section Type' : 'نوع القسم'}
+                  </label>
+                  <select
+                    value={formData.type || 'banner'}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value, settings: {} })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {sectionTypes.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {locale === 'en' ? 'Title (English)' : 'العنوان (إنجليزي)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title_en || ''}
+                    onChange={(e) => setFormData({ ...formData, title_en: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {locale === 'en' ? 'Title (Arabic)' : 'العنوان (عربي)'}
+                  </label>
+                  <input
+                    type="text"
+                    dir="rtl"
+                    value={formData.title_ar || ''}
+                    onChange={(e) => setFormData({ ...formData, title_ar: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="is_active"
+                      checked={formData.is_active || false}
+                      onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+                      {locale === 'en' ? 'Active Status' : 'حالة التفعيل'}
+                    </label>
+                  </div>
+                </div>
+
+                {/* Dynamic settings based on type */}
+                {formData.type === 'banner' && (
+                  <div className="md:col-span-2 bg-gray-50 p-4 rounded-lg space-y-4 shadow-inner">
+                    <h4 className="font-medium text-gray-900 border-b pb-2">
+                      {locale === 'en' ? 'Banner Settings' : 'إعدادات البانر'}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {locale === 'en' ? 'Banner Layout' : 'تخطيط البانر'}
+                        </label>
+                        <select
+                          value={formData.settings?.layout || 'grid'}
+                          onChange={(e) => setFormData({ ...formData, settings: { ...formData.settings, layout: e.target.value } })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="grid">Grid Layout</option>
+                          <option value="slider">Slider / Carousel</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {locale === 'en' ? 'Banner Tag / Type' : 'علامة البانر / النوع'}
+                        </label>
+                        <select
+                          value={formData.settings?.banner_type || 'promotional'}
+                          onChange={(e) => setFormData({ ...formData, settings: { ...formData.settings, banner_type: e.target.value } })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="promotional">Promotional</option>
+                          <option value="category_banner">Category</option>
+                          <option value="hero_slider">Hero</option>
+                        </select>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {locale === 'en' ? 'Columns (if Grid)' : 'الأعمدة (إذا كان شبكة)'}
+                        </label>
+                        <select
+                          value={formData.settings?.columns || 2}
+                          onChange={(e) => setFormData({ ...formData, settings: { ...formData.settings, columns: parseInt(e.target.value) } })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value={1}>1 Column</option>
+                          <option value={2}>2 Columns</option>
+                          <option value={3}>3 Columns</option>
+                          <option value={4}>4 Columns</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {formData.type === 'product_row' && (
+                  <div className="md:col-span-2 bg-gray-50 p-4 rounded-lg space-y-4 shadow-inner">
+                    <h4 className="font-medium text-gray-900 border-b pb-2">
+                      {locale === 'en' ? 'Product Row Settings' : 'إعدادات صف المنتجات'}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {locale === 'en' ? 'Filter Type' : 'نوع التصفية'}
+                        </label>
+                        <select
+                          value={formData.settings?.filter_type || 'subcategory'}
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            settings: { 
+                              ...formData.settings, 
+                              filter_type: e.target.value,
+                              filter_value: '' // Reset filter value when type changes
+                            } 
+                          })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="subcategory">{locale === 'en' ? 'Subcategory' : 'الفئة الفرعية'}</option>
+                          <option value="tag">{locale === 'en' ? 'Tag' : 'العلامة'}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {formData.settings?.filter_type === 'tag' 
+                            ? (locale === 'en' ? 'Select Tag' : 'اختر العلامة')
+                            : (locale === 'en' ? 'Select Subcategory' : 'اختر الفئة الفرعية')
+                          }
+                        </label>
+                        {formData.settings?.filter_type === 'tag' ? (
+                          <select
+                            value={formData.settings?.filter_value || ''}
+                            onChange={(e) => setFormData({ 
+                              ...formData, 
+                              settings: { ...formData.settings, filter_value: e.target.value } 
+                            })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">{locale === 'en' ? 'Select a tag' : 'اختر علامة'}</option>
+                            {tags.map((tag) => (
+                              <option key={tag.id} value={tag.id}>
+                                {locale === 'ar' ? tag.name_ar : tag.name_en}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <select
+                            value={formData.settings?.filter_value || ''}
+                            onChange={(e) => setFormData({ 
+                              ...formData, 
+                              settings: { ...formData.settings, filter_value: e.target.value } 
+                            })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">{locale === 'en' ? 'Select a subcategory' : 'اختر فئة فرعية'}</option>
+                            {subcategories.map((subcat: any) => (
+                              <option key={subcat.id} value={subcat.id}>
+                                {locale === 'ar' ? subcat.name_ar : subcat.name_en}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {locale === 'en' ? 'Product Count' : 'عدد المنتجات'}
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.settings?.product_count || 8}
+                          onChange={(e) => setFormData({ ...formData, settings: { ...formData.settings, product_count: parseInt(e.target.value) } })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 rounded-b-lg border-t border-gray-200 flex justify-end space-x-3">
               <button
+                type="button"
                 onClick={() => {
                   setShowAddSection(false);
                   setEditingSection(null);
                 }}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
               >
                 {locale === 'en' ? 'Cancel' : 'إلغاء'}
               </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                {editingSection 
-                  ? (locale === 'en' ? 'Update' : 'تحديث')
-                  : (locale === 'en' ? 'Create' : 'إنشاء')
-                }
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center justify-center min-w-[120px]"
+              >
+                {isSubmitting ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  editingSection 
+                    ? (locale === 'en' ? 'Save Changes' : 'حفظ التغييرات')
+                    : (locale === 'en' ? 'Create Section' : 'إنشاء القسم')
+                )}
               </button>
             </div>
           </div>

@@ -2,14 +2,10 @@ import { useLocale } from 'next-intl';
 import { cookies } from 'next/headers';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import FeaturedSubcategories from '@/components/FeaturedSubcategories';
-import CategoryScroll from '@/components/CategoryScroll';
-import TenantCarousel from '@/components/TenantCarouselClient';
-import BannerSlider from '@/components/BannerSlider';
-import { subcategoriesApi, tenantsApi } from '@/lib/server/api';
+import DynamicHomeSection from '@/components/DynamicHomeSection';
+import { subcategoriesApi, tenantsApi, categoriesApi, homeSectionsApi, productsApi } from '@/lib/server/api';
 import { getFullImageUrl } from '@/lib/imageUtils';
 
-// Server component for fetching featured subcategories
 async function getFeaturedSubcategories(locale: string) {
   try {
     const result = await subcategoriesApi.getFeatured(locale);
@@ -25,11 +21,10 @@ async function getFeaturedSubcategories(locale: string) {
     return [];
   } catch (error) {
     console.error('Error fetching featured subcategories:', error);
-    return [];
+  return [];
   }
 }
 
-// Server component for fetching tenants
 async function getTenants() {
   try {
     return await tenantsApi.getAll();
@@ -39,60 +34,72 @@ async function getTenants() {
   }
 }
 
-// Get auth token from cookies for Header
+async function getHomeSections() {
+  try {
+    const response = await homeSectionsApi.getAll();
+    return response.success ? response.data : [];
+  } catch (error) {
+    console.error('Error fetching home sections:', error);
+    return [];
+  }
+}
+
+async function getProducts() {
+  try {
+    return await productsApi.getAll();
+  } catch (error) {
+    return [];
+  }
+}
+
 async function getAuthToken() {
   const cookieStore = await cookies();
   return cookieStore.get('auth_token')?.value || null;
+}
+
+async function getCategories(locale: string) {
+  try {
+    const result = await categoriesApi.getAll(locale);
+    return result || [];
+  } catch (error) {
+    console.error('Error fetching categories for megamenu:', error);
+    return [];
+  }
 }
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const localeStr = locale as 'en' | 'ar';
 
-  // Fetch data in parallel on the server
-  const [featuredSubcategories, tenants, authToken] = await Promise.all([
+  const [featuredSubcategories, tenants, authToken, categories, homeSections, products] = await Promise.all([
     getFeaturedSubcategories(localeStr),
     getTenants(),
     getAuthToken(),
+    getCategories(localeStr),
+    getHomeSections(),
+    getProducts()
   ]);
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header authToken={authToken} />
+      {/* <Header authToken={authToken} categories={categories} /> */}
 
       <main className="flex-1">
-        {/* Hero Section - Banner Slider */}
-        <div className="bg-neutral-50">
-          <div className="container mx-auto px-2 md:px-4 py-4 md:py-6">
-            {/* BannerSlider is a client component that shows multiple banners with navigation */}
-            <BannerSlider
-              type="promotional"
-              position="top"
-              height="lg"
-              autoPlay={true}
-              autoPlayInterval={5000}
-              className="shadow-xl"
+        {homeSections.length > 0 ? (
+          homeSections.map((section: any) => (
+            <DynamicHomeSection
+              key={section.id}
+              section={section}
+              products={products}
+              tenants={tenants}
+              featuredSubcategories={featuredSubcategories}
+              categories={categories}
             />
+          ))
+        ) : (
+          <div className="flex justify-center py-20 text-gray-500">
+            {localeStr === 'en' ? 'No home sections configured.' : 'لم يتم تكوين أقسام للصفحة الرئيسية.'}
           </div>
-        </div>
-
-        {/* Category Scroll - Horizontal categories under hero */}
-        <CategoryScroll locale={localeStr} />
-
-        {/* Tenant Carousel - Client component for interactivity */}
-        <div className="relative py-8">
-          <div className="container mx-auto px-4 mb-6">
-            <h2 className="text-2xl font-bold text-neutral-900">
-              {localeStr === 'en' ? 'Our Partners' : 'شركاؤنا'}
-            </h2>
-          </div>
-          <div className="relative">
-            <TenantCarousel initialTenants={tenants} />
-          </div>
-        </div>
-
-        {featuredSubcategories.length > 0 && (
-          <FeaturedSubcategories initialData={featuredSubcategories} locale={localeStr} />
         )}
       </main>
 

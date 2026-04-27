@@ -1,68 +1,39 @@
-'use client';
+  'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { 
   Plus, 
   Edit, 
   Trash2, 
   Search,
-  Filter,
-  Eye,
   ToggleLeft,
   ToggleRight,
-  Hash,
   Tag as TagIcon,
   Star,
-  Palette,
-  Users,
   TrendingUp,
-  CheckSquare,
-  Square
+  RefreshCw,
+  X,
+  AlertCircle
 } from 'lucide-react';
+import { DataTable } from '@/components/ui/data-table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TagFormData, Tag } from '../../../../lib/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-interface Tag {
-  id: number;
-  name_en: string;
-  name_ar: string;
-  slug: string;
-  description_en?: string;
-  description_ar?: string;
-  type: string;
-  color: string;
-  icon?: string;
-  image_url?: string;
-  sort_order: number;
-  is_active: boolean;
-  is_featured: boolean;
-  products_count?: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface TagFormData {
-  name_en: string;
-  name_ar: string;
-  slug?: string;
-  description_en?: string;
-  description_ar?: string;
-  type: string;
-  color: string;
-  icon?: string;
-  image_url?: string;
-  sort_order: number;
-  is_active: boolean;
-  is_featured: boolean;
-}
-
 const tagTypes = {
+  skin_type: 'Skin Type',
+  concern: 'Skin Concern',
+  ingredient: 'Key Ingredient',
+  finish: 'Look & Finish',
+  routine: 'Routine Step',
+  promotion: 'Offers & Sales',
+  brand_deal: 'Brand Exclusive',
   occasion: 'Occasion',
-  giftee: 'Giftee',
-  style: 'Style',
-  season: 'Season',
-  age_group: 'Age Group',
   other: 'Other'
 };
 
@@ -70,12 +41,14 @@ export default function AdminTagsPage() {
   const locale = useLocale() as 'en' | 'ar';
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [filterType, setFilterType] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [formData, setFormData] = useState<TagFormData>({
     name_en: '',
@@ -87,29 +60,26 @@ export default function AdminTagsPage() {
     color: '#3B82F6',
     icon: '',
     image_url: '',
+    starts_at: '',
+    ends_at: '',
+    discount_percentage: 0,
     sort_order: 0,
     is_active: true,
     is_featured: false,
   });
 
-  useEffect(() => {
-    fetchTags();
-  }, [searchTerm, filterType, filterStatus]);
-
   const fetchTags = async () => {
     try {
       const token = localStorage.getItem('auth_token');
       if (!token) {
-        console.error('No auth token found');
         setLoading(false);
         return;
       }
 
       const params = new URLSearchParams();
-      
       if (searchTerm) params.append('search', searchTerm);
-      if (filterType) params.append('type', filterType);
-      if (filterStatus) params.append('status', filterStatus);
+      if (filterType && filterType !== 'all') params.append('type', filterType);
+      if (filterStatus && filterStatus !== 'all') params.append('status', filterStatus);
 
       const response = await fetch(`${API_BASE_URL}/admin/tags?${params}`, {
         headers: {
@@ -121,11 +91,7 @@ export default function AdminTagsPage() {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Tags API response:', result);
         setTags(result.data || []);
-      } else {
-        const errorText = await response.text();
-        console.error('Failed to fetch tags:', response.status, errorText);
       }
     } catch (error) {
       console.error('Error fetching tags:', error);
@@ -134,9 +100,21 @@ export default function AdminTagsPage() {
     }
   };
 
+  const refreshData = async () => {
+    setRefreshing(true);
+    await fetchTags();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchTags();
+  }, [searchTerm, filterType, filterStatus]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setSaving(true);
+    setErrorMessage('');
+
     try {
       const token = localStorage.getItem('auth_token');
       const url = editingTag 
@@ -150,20 +128,23 @@ export default function AdminTagsPage() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
         },
         body: JSON.stringify(formData),
       });
 
-      console.log("dfdfdfdfd",formData)
       if (response.ok) {
-        fetchTags();
+        await fetchTags();
         resetForm();
         setShowAddModal(false);
       } else {
-        console.error('Failed to save tag:', response.status);
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || 'Failed to save tag');
       }
     } catch (error) {
-      console.error('Error saving tag:', error);
+      setErrorMessage('Network error occurred');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -178,6 +159,9 @@ export default function AdminTagsPage() {
       type: tag.type,
       color: tag.color,
       icon: tag.icon || '',
+      discount_percentage: tag.discount_percentage,
+      starts_at: tag.starts_at,
+      ends_at: tag.ends_at,
       image_url: tag.image_url || '',
       sort_order: tag.sort_order,
       is_active: tag.is_active,
@@ -193,15 +177,11 @@ export default function AdminTagsPage() {
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_BASE_URL}/admin/tags/${tagId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (response.ok) {
-        fetchTags();
-      } else {
-        console.error('Failed to delete tag:', response.status);
+        await fetchTags();
       }
     } catch (error) {
       console.error('Error deleting tag:', error);
@@ -211,49 +191,17 @@ export default function AdminTagsPage() {
   const handleToggleStatus = async (tag: Tag) => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE_URL}/admin/tags/${tag.id}`, {
+      await fetch(`${API_BASE_URL}/admin/tags/${tag.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...tag,
-          is_active: !tag.is_active
-        }),
+        body: JSON.stringify({ ...tag, is_active: !tag.is_active }),
       });
-
-      if (response.ok) {
-        fetchTags();
-      }
+      await fetchTags();
     } catch (error) {
       console.error('Error toggling tag status:', error);
-    }
-  };
-
-  const handleBulkStatusUpdate = async (isActive: boolean) => {
-    if (selectedTags.length === 0) return;
-
-    try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE_URL}/admin/tags/bulk-update-status`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          tag_ids: selectedTags,
-          is_active: isActive,
-        }),
-      });
-
-      if (response.ok) {
-        fetchTags();
-        setSelectedTags([]);
-      }
-    } catch (error) {
-      console.error('Error updating tags:', error);
     }
   };
 
@@ -269,443 +217,399 @@ export default function AdminTagsPage() {
       icon: '',
       image_url: '',
       sort_order: 0,
+      starts_at: '',
+      ends_at: '',
+      discount_percentage: 0,
       is_active: true,
       is_featured: false,
     });
     setEditingTag(null);
+    setErrorMessage('');
   };
 
-  const toggleTagSelection = (tagId: number) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) 
-        ? prev.filter(id => id !== tagId)
-        : [...prev, tagId]
-    );
-  };
-
-  const toggleAllTags = () => {
-    if (selectedTags.length === tags.length) {
-      setSelectedTags([]);
-    } else {
-      setSelectedTags(tags.map(tag => tag.id));
-    }
-  };
+  const columns = React.useMemo(() => [
+    {
+      header: 'Tag',
+      cell: (tag: Tag) => (
+        <div className="flex items-center gap-3">
+          <div 
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-xl border"
+            style={{ borderLeft: `4px solid ${tag.color}`, backgroundColor: `${tag.color}10` }}
+          >
+            {tag.icon || <TagIcon className="w-4 h-4" style={{ color: tag.color }} />}
+          </div>
+          <div>
+            <div className="font-medium">{locale === 'ar' ? tag.name_ar : tag.name_en}</div>
+            <div className="text-xs text-muted-foreground font-mono">{tag.slug}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Type',
+      cell: (tag: Tag) => (
+        <Badge variant="secondary" className="capitalize">
+          {tagTypes[tag.type as keyof typeof tagTypes] || tag.type}
+        </Badge>
+      ),
+    },
+    {
+      header: 'Products',
+      cell: (tag: Tag) => (
+        <span className="text-sm">{tag.products_count || 0}</span>
+      ),
+    },
+    {
+      header: 'Status',
+      cell: (tag: Tag) => (
+        <div className="flex items-center gap-2">
+          <button onClick={() => handleToggleStatus(tag)}>
+            {tag.is_active ? (
+              <ToggleRight className="w-5 h-5 text-green-600" />
+            ) : (
+              <ToggleLeft className="w-5 h-5 text-muted-foreground" />
+            )}
+          </button>
+          {tag.is_featured && <Star className="w-4 h-4 text-yellow-500 fill-current" />}
+        </div>
+      ),
+    },
+    {
+      header: <div className="text-right">Actions</div>,
+      cell: (tag: Tag) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleEdit(tag)}
+            className="h-8 w-8 p-0"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleDelete(tag.id)}
+            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      ),
+      className: 'text-right',
+    },
+  ], [locale]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading tags...</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-3">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Loading tags...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Tag Management</h1>
-            <p className="text-neutral-600 mt-1">Manage product tags and categories</p>
-          </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setShowAddModal(true);
-            }}
-            className="bg-black text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add New Tag
-          </button>
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Tag Management</h1>
+          <p className="text-muted-foreground mt-1">Manage product tags, categories, and promotions</p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={refreshData} disabled={refreshing}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button size="sm" onClick={() => { resetForm(); setShowAddModal(true); }}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Tag
+          </Button>
+        </div>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg border border-neutral-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-neutral-600">Total Tags</p>
-                <p className="text-2xl font-bold text-neutral-900">{tags.length}</p>
-              </div>
-              <TagIcon className="w-8 h-8 text-neutral-400" />
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 rounded-xl p-6 border border-blue-200 dark:border-blue-800 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Tags</p>
+              <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">{tags.length}</p>
             </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-neutral-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-neutral-600">Active Tags</p>
-                <p className="text-2xl font-bold text-green-600">{tags.filter(t => t.is_active).length}</p>
-              </div>
-              <ToggleRight className="w-8 h-8 text-green-400" />
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-neutral-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-neutral-600">Featured Tags</p>
-                <p className="text-2xl font-bold text-yellow-600">{tags.filter(t => t.is_featured).length}</p>
-              </div>
-              <Star className="w-8 h-8 text-yellow-400" />
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-neutral-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-neutral-600">Tag Types</p>
-                <p className="text-2xl font-bold text-blue-600">{new Set(tags.map(t => t.type)).size}</p>
-              </div>
-              <Filter className="w-8 h-8 text-blue-400" />
+            <div className="bg-blue-200 dark:bg-blue-800 p-3 rounded-lg">
+              <TagIcon className="w-6 h-6 text-blue-600 dark:text-blue-300" />
             </div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white p-4 rounded-lg border border-neutral-200 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search tags..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-              />
+        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 rounded-xl p-6 border border-green-200 dark:border-green-800 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-600 dark:text-green-400">Active Tags</p>
+              <p className="text-3xl font-bold text-green-900 dark:text-green-100 mt-2">{tags.filter(t => t.is_active).length}</p>
             </div>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-            >
-              <option value="">All Types</option>
+            <div className="bg-green-200 dark:bg-green-800 p-3 rounded-lg">
+              <ToggleRight className="w-6 h-6 text-green-600 dark:text-green-300" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950 dark:to-yellow-900 rounded-xl p-6 border border-yellow-200 dark:border-yellow-800 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Featured</p>
+              <p className="text-3xl font-bold text-yellow-900 dark:text-yellow-100 mt-2">{tags.filter(t => t.is_featured).length}</p>
+            </div>
+            <div className="bg-yellow-200 dark:bg-yellow-800 p-3 rounded-lg">
+              <Star className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 rounded-xl p-6 border border-pink-200 dark:border-pink-800 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-pink-600 dark:text-pink-400">Active Promos</p>
+              <p className="text-3xl font-bold text-pink-900 dark:text-pink-100 mt-2">
+                {tags.filter(t => (t.type === 'promotion' || t.type === 'brand_deal') && t.is_active).length}
+              </p>
+            </div>
+            <div className="bg-pink-200 dark:bg-pink-800 p-3 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-pink-600 dark:text-pink-300" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-card rounded-xl border shadow-sm p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tags..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
               {Object.entries(tagTypes).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
+                <SelectItem key={key} value={key}>{label}</SelectItem>
               ))}
-            </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-            {selectedTags.length > 0 && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleBulkStatusUpdate(true)}
-                  className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
-                >
-                  Activate ({selectedTags.length})
-                </button>
-                <button
-                  onClick={() => handleBulkStatusUpdate(false)}
-                  className="bg-red-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors"
-                >
-                  Deactivate ({selectedTags.length})
-                </button>
-              </div>
-            )}
-          </div>
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full sm:w-32">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+      </div>
 
-        {/* Tags Table */}
-        <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-neutral-200">
-              <thead className="bg-neutral-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    <button
-                      onClick={toggleAllTags}
-                      className="flex items-center"
-                    >
-                      {selectedTags.length === tags.length && tags.length > 0 ? (
-                        <CheckSquare className="w-4 h-4" />
-                      ) : (
-                        <Square className="w-4 h-4" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Tag
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Products
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-neutral-200">
-                {tags.map((tag) => (
-                  <tr key={tag.id} className="hover:bg-neutral-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => toggleTagSelection(tag.id)}
-                        className="flex items-center"
-                      >
-                        {selectedTags.includes(tag.id) ? (
-                          <CheckSquare className="w-4 h-4 text-black" />
-                        ) : (
-                          <Square className="w-4 h-4 text-neutral-400" />
-                        )}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div 
-                          className="w-4 h-4 rounded-full mr-3 border border-neutral-200"
-                          style={{ backgroundColor: tag.color }}
-                        ></div>
-                        <div>
-                          <div className="text-sm font-medium text-neutral-900 flex items-center">
-                            {tag.icon && <span className="mr-2">{tag.icon}</span>}
-                            {locale === 'ar' ? tag.name_ar : tag.name_en}
-                          </div>
-                          <div className="text-sm text-neutral-500">
-                            {locale === 'ar' ? tag.name_en : tag.name_ar}
-                          </div>
-                          <div className="text-xs text-neutral-400">{tag.slug}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-neutral-100 text-neutral-800">
-                        {tagTypes[tag.type as keyof typeof tagTypes]}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                      {tag.products_count || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleToggleStatus(tag)}
-                          className="flex items-center"
-                        >
-                          {tag.is_active ? (
-                            <ToggleRight className="w-5 h-5 text-green-600" />
-                          ) : (
-                            <ToggleLeft className="w-5 h-5 text-neutral-400" />
-                          )}
-                        </button>
-                        {tag.is_featured && (
-                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEdit(tag)}
-                          className="text-neutral-600 hover:text-black transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(tag.id)}
-                          className="text-neutral-600 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {tags.length === 0 && (
-            <div className="text-center py-12">
-              <TagIcon className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-neutral-900 mb-2">No tags found</h3>
-              <p className="text-neutral-600 mb-4">Get started by creating your first tag.</p>
-              <button
-                onClick={() => {
-                  resetForm();
-                  setShowAddModal(true);
-                }}
-                className="bg-black text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors"
-              >
-                Add New Tag
-              </button>
-            </div>
-          )}
-        </div>
+      {/* Table */}
+      <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={tags}
+          emptyMessage="No tags found"
+        />
       </div>
 
       {/* Form Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-background rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border animate-in zoom-in-95 duration-200">
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-neutral-900 mb-6">
-                {editingTag ? 'Edit Tag' : 'Add New Tag'}
-              </h3>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-primary/10 p-2 rounded-lg">
+                  <TagIcon className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold">
+                  {editingTag ? 'Edit Tag' : 'Create New Tag'}
+                </h3>
+              </div>
+
+              {errorMessage && (
+                <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg border border-destructive/20 mb-4">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Name (English)</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm font-medium mb-2">Name (English)</label>
+                    <Input
                       required
                       value={formData.name_en}
                       onChange={(e) => setFormData({...formData, name_en: e.target.value})}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                      placeholder="e.g., Anti-Aging"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Name (Arabic)</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm font-medium mb-2">Name (Arabic)</label>
+                    <Input
                       required
                       value={formData.name_ar}
                       onChange={(e) => setFormData({...formData, name_ar: e.target.value})}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                      placeholder="e.g., مضاد للشيخوخة"
+                      dir="rtl"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">Slug</label>
-                  <input
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    placeholder="Leave empty to auto-generate"
-                  />
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Type</label>
-                    <select
-                      value={formData.type}
-                      onChange={(e) => setFormData({...formData, type: e.target.value})}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    >
-                      {Object.entries(tagTypes).map(([key, label]) => (
-                        <option key={key} value={key}>{label}</option>
-                      ))}
-                    </select>
+                    <label className="block text-sm font-medium mb-2">Type</label>
+                    <Select value={formData.type} onValueChange={(v) => setFormData({...formData, type: v})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(tagTypes).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Color</label>
-                    <input
+                    <label className="block text-sm font-medium mb-2">Color</label>
+                    <Input
                       type="color"
                       value={formData.color}
                       onChange={(e) => setFormData({...formData, color: e.target.value})}
-                      className="w-full h-10 px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                      className="h-10 cursor-pointer"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(formData.type === 'promotion' || formData.type === 'brand_deal') && (
+                  <div className="bg-pink-50 dark:bg-pink-950/20 p-4 rounded-lg border border-pink-200 dark:border-pink-800 space-y-4">
+                    <div className="flex items-center gap-2 text-pink-700 dark:text-pink-400 font-semibold text-sm">
+                      <TrendingUp className="w-4 h-4" />
+                      Promotion Settings
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Discount %</label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={formData.discount_percentage}
+                          onChange={(e) => setFormData({...formData, discount_percentage: parseInt(e.target.value) || 0})}
+                          placeholder="20"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Starts At</label>
+                        <Input
+                          type="date"
+                          value={formData.starts_at || ''}
+                          onChange={(e) => setFormData({...formData, starts_at: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Ends At</label>
+                        <Input
+                          type="date"
+                          value={formData.ends_at || ''}
+                          onChange={(e) => setFormData({...formData, ends_at: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Icon (Emoji)</label>
-                    <input
-                      type="text"
-                      value={formData.icon}
-                      onChange={(e) => setFormData({...formData, icon: e.target.value})}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                      placeholder="🎁"
+                    <label className="block text-sm font-medium mb-2">Slug</label>
+                    <Input
+                      value={formData.slug}
+                      onChange={(e) => setFormData({...formData, slug: e.target.value})}
+                      placeholder="auto-generated"
+                      className="font-mono text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Sort Order</label>
-                    <input
+                    <label className="block text-sm font-medium mb-2">Icon</label>
+                    <Input
+                      value={formData.icon}
+                      onChange={(e) => setFormData({...formData, icon: e.target.value})}
+                      placeholder="✨"
+                      className="text-center"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Sort Order</label>
+                    <Input
                       type="number"
                       value={formData.sort_order}
                       onChange={(e) => setFormData({...formData, sort_order: parseInt(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">Image URL</label>
-                  <input
-                    type="url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Description (English)</label>
-                    <textarea
-                      value={formData.description_en}
-                      onChange={(e) => setFormData({...formData, description_en: e.target.value})}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Description (Arabic)</label>
-                    <textarea
-                      value={formData.description_ar}
-                      onChange={(e) => setFormData({...formData, description_ar: e.target.value})}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center">
+                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
                     <input
                       type="checkbox"
                       checked={formData.is_active}
                       onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                      className="mr-2 rounded border-neutral-300 text-black focus:ring-black"
+                      className="w-4 h-4 rounded"
                     />
-                    <span className="text-sm font-medium text-neutral-700">Active</span>
+                    <span className="text-sm font-medium">Active</span>
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
                     <input
                       type="checkbox"
                       checked={formData.is_featured}
                       onChange={(e) => setFormData({...formData, is_featured: e.target.checked})}
-                      className="mr-2 rounded border-neutral-300 text-black focus:ring-black"
+                      className="w-4 h-4 rounded"
                     />
-                    <span className="text-sm font-medium text-neutral-700">Featured</span>
+                    <span className="text-sm font-medium">Featured</span>
                   </label>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-6 border-t border-neutral-200">
-                  <button
+                <div className="flex gap-3 pt-4">
+                  <Button
                     type="button"
-                    onClick={() => {
-                      setShowAddModal(false);
-                      resetForm();
-                    }}
-                    className="px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700 hover:bg-neutral-50 transition-colors"
+                    variant="outline"
+                    onClick={() => { setShowAddModal(false); resetForm(); }}
+                    disabled={saving}
+                    className="flex-1"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
-                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-neutral-800 transition-colors"
+                    disabled={saving}
+                    className="flex-1"
                   >
-                    {editingTag ? 'Update' : 'Create'} Tag
-                  </button>
+                    {saving ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      editingTag ? 'Update Tag' : 'Create Tag'
+                    )}
+                  </Button>
                 </div>
               </form>
             </div>

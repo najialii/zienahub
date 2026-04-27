@@ -10,22 +10,76 @@ export interface Category {
   updated_at?: string;
 }
 
+
+export interface Tag {
+  id: number;
+  name_en: string;
+  name_ar: string;
+  slug: string;
+  description_en?: string;
+  description_ar?: string;
+  type: string;
+  color: string;
+  icon?: string;
+  starts_at?: string | null, 
+  ends_at?: string | null,
+  discount_percentage:number,
+  image_url?: string;
+  sort_order: number;
+  is_active: boolean;
+  is_featured: boolean;
+  products_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TagFormData {
+  name_en: string;
+  name_ar: string;
+  slug?: string;
+  description_en?: string;
+  description_ar?: string;
+  type: string;
+  color: string;
+  icon?: string;
+  starts_at?: string | null, 
+  ends_at?: string | null, 
+  discount_percentage:number,
+  image_url?: string;
+  sort_order: number;
+  is_active: boolean;
+  is_featured: boolean;
+}
+
+
 export interface Product {
   id: number;
   name: string;
   slug: string;
   sku?: string;
   description?: string;
+  how_to_use?: string;
+  ingredients?: string;
+  benefits?: string;
+  brand?: string;
+  size?: string;
   price: number;
   sale_price?: number;
   stock_quantity: number;
   image_url: string;
+  images?: { id: number; image_url: string; sort_order: number }[];
   category?: {
     id: number;
     name: string;
     slug: string;
   };
+  subcategory?: {
+    id: number;
+    name: string;
+    slug: string;
+  };
   subcategory_id?: number;
+  tag_id?: number | null;
   status?: string;
   created_at?: string;
   updated_at?: string;

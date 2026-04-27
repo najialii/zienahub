@@ -333,7 +333,7 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header />
+        {/* <Header /> */}
         <main className="flex-1 py-20 bg-neutral-50">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl font-bold mb-4">
@@ -359,7 +359,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      {/* <Header /> */}
       
       <main className="flex-1 py-20 bg-neutral-50">
         <div className="container mx-auto px-4">

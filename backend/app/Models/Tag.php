@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Tag extends Model
@@ -17,59 +18,45 @@ class Tag extends Model
         'slug',
         'description_en',
         'description_ar',
-        'type',
+        'type', // e.g., 'promotion', 'brand', 'category'
         'color',
         'icon',
         'image_url',
         'sort_order',
         'is_active',
         'is_featured',
+        // NEW: Promotion Fields
+        'discount_percentage', 
+        'valid_until',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'sort_order' => 'integer',
+        'discount_percentage' => 'integer',
+        'valid_until' => 'datetime',
     ];
 
-    protected $appends = ['name', 'description'];
+    protected $appends = ['is_expired'];
 
     /**
-     * Get the name attribute based on current locale.
+     * NICEONE LOGIC: Check if a promotion tag is still valid
      */
-    public function getNameAttribute()
+    public function getIsExpiredAttribute(): bool
     {
-        $locale = app()->getLocale();
-        return $locale === 'ar' ? $this->name_ar : $this->name_en;
+        if (!$this->valid_until) return false;
+        return $this->valid_until->isPast();
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SCOPES for CMS
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Get the description attribute based on current locale.
-     */
-    public function getDescriptionAttribute()
-    {
-        $locale = app()->getLocale();
-        return $locale === 'ar' ? $this->description_ar : $this->description_en;
-    }
-
-    /**
-     * Get the products that belong to this tag.
-     */
-    public function products(): BelongsToMany
-    {
-        return $this->belongsToMany(Product::class);
-    }
-
-
-      
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
-    
-    /**
-     * Scope to get only active tags.
+     * Get only active tags
      */
     public function scopeActive($query)
     {
@@ -77,7 +64,15 @@ class Tag extends Model
     }
 
     /**
-     * Scope to get only featured tags.
+     * Order tags by sort_order
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
+    }
+
+    /**
+     * Get only featured tags
      */
     public function scopeFeatured($query)
     {
@@ -85,7 +80,7 @@ class Tag extends Model
     }
 
     /**
-     * Scope to filter by type.
+     * Get tags by type
      */
     public function scopeOfType($query, $type)
     {
@@ -93,30 +88,22 @@ class Tag extends Model
     }
 
     /**
-     * Scope to order by sort order.
+     * Get only active promotions that haven't expired
      */
-    public function scopeOrdered($query)
+    public function scopeActivePromotions($query)
     {
-        return $query->orderBy('sort_order')->orderBy('name_en');
+        return $query->where('type', 'promotion')
+                     ->where('is_active', true)
+                     ->where(function ($q) {
+                         $q->whereNull('valid_until')
+                           ->orWhere('valid_until', '>', now());
+                     });
     }
 
-    /**
-     * Boot the model.
-     */
-    protected static function boot()
+    // ... (Keep your existing Name/Description attributes and boot methods)
+
+    public function products(): HasMany
     {
-        parent::boot();
-
-        static::creating(function ($tag) {
-            if (empty($tag->slug)) {
-                $tag->slug = Str::slug($tag->name_en);
-            }
-        });
-
-        static::updating(function ($tag) {
-            if ($tag->isDirty('name_en') && empty($tag->slug)) {
-                $tag->slug = Str::slug($tag->name_en);
-            }
-        });
+        return $this->hasMany(Product::class);
     }
 }

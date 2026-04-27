@@ -38,7 +38,7 @@ class TagController extends Controller
                 });
             }
 
-            $tags = $query->ordered()->get();
+            $tags = $query->get();
 
             return response()->json([
                 'success' => true,
@@ -72,11 +72,14 @@ class TagController extends Controller
             'slug' => 'nullable|string|max:255|unique:tags,slug',
             'description_en' => 'nullable|string',
             'description_ar' => 'nullable|string',
-            'type' => 'required|in:occasion,giftee,style,season,age_group,other',
+            'type' => 'required|string',
             'color' => 'nullable|string|max:7',
             'icon' => 'nullable|string|max:255',
             'image_url' => 'nullable|url|max:500',
             'sort_order' => 'nullable|integer|min:0',
+            'starts_at ' => 'nullable|date',
+            'ends_at' => 'nullable|date|after:starts_at',
+            'discount_percentage' => 'integer|nullable',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
         ]);
@@ -132,10 +135,14 @@ class TagController extends Controller
             ],
             'description_en' => 'nullable|string',
             'description_ar' => 'nullable|string',
-            'type' => 'required|in:occasion,giftee,style,season,age_group,other',
+            // 'type' => 'required|in:occasion,giftee,style,season,age_group,other',
+            'type' => 'required|string',
             'color' => 'nullable|string|max:7',
             'icon' => 'nullable|string|max:255',
             'image_url' => 'nullable|url|max:500',
+            'starts_at ' => 'nullable|date',
+            'ends_at' => 'nullable|date|after:starts_at',
+            'discount_percentage' => 'integer|nullable',
             'sort_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',

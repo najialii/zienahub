@@ -1,0 +1,90 @@
+// app/[locale]/page.tsx
+import { cookies } from 'next/headers';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import DynamicHomeSection from '@/components/DynamicHomeSection';
+import { subcategoriesApi, tenantsApi, homeSectionsApi } from '@/lib/server/api'; // Assume you add homeSectionsApi
+import { getFullImageUrl } from '@/lib/imageUtils';
+
+async function getHomeSections() {
+  try {
+    // This calls your Laravel Controller: HomeSectionController@index
+    const result = await homeSectionsApi.getAll(); 
+    return result.success ? result.data : [];
+  } catch (error) {
+    console.error('Error fetching home sections:', error);
+    return [];
+  }
+}
+
+async function getFeaturedSubcategories(locale: string) {
+  try {
+    const result = await subcategoriesApi.getFeatured(locale);
+    if (result.success) {
+      return result.data.map(subcategory => ({
+        ...subcategory,
+        products: subcategory.products.map(product => ({
+          ...product,
+          image_url: getFullImageUrl(product.image_url),
+        })),
+      }));
+    }
+    return [];
+  } catch (error) {
+    return [];
+  }
+}
+
+async function getTenants() {
+  try {
+    return await tenantsApi.getAll();
+  } catch (error) {
+    return [];
+  }
+}
+
+async function getAuthToken() {
+  const cookieStore = await cookies();
+  return cookieStore.get('auth_token')?.value || null;
+}
+
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const localeStr = locale as 'en' | 'ar';
+
+  // Fetch everything in parallel
+  const [sections, featuredSubcategories, tenants, authToken] = await Promise.all([
+    getHomeSections(),
+    getFeaturedSubcategories(localeStr),
+    getTenants(),
+    getAuthToken(),
+  ]);
+
+  return (
+    <div className="min-h-screen flex flex-col bg-neutral-50">
+      <Header authToken={authToken} />
+
+      <main className="flex-1">
+        {sections.length > 0 ? (
+          sections.map((section: any) => (
+            <DynamicHomeSection 
+              key={section.id}
+              section={section}
+              tenants={tenants}
+              featuredSubcategories={featuredSubcategories}
+              // If you have a global products array, pass it here
+              products={[]} 
+            />
+          ))
+        ) : (
+          /* Fallback if no sections are returned from DB */
+          <div className="py-20 text-center text-gray-400">
+            No sections configured.
+          </div>
+        )}
+      </main>
+
+      <Footer />
+    </div>
+  );
+}

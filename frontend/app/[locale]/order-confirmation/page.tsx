@@ -38,7 +38,7 @@ function OrderConfirmationContent() {
   if (!orderInfo) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header />
+        {/* <Header /> */}
         <main className="flex-1 py-20 bg-neutral-50">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto">
@@ -58,7 +58,7 @@ function OrderConfirmationContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      {/* <Header /> */}
       
       <main className="flex-1 py-20 bg-neutral-50">
         <div className="container mx-auto px-4">
@@ -181,7 +181,6 @@ export default function OrderConfirmationPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex flex-col">
-        <Header />
         <main className="flex-1 py-20 bg-neutral-50">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto">

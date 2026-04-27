@@ -2,110 +2,114 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Banner;
 
 class BannerSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
+        // Clear existing banners to avoid duplicates
+        Banner::truncate();
+
         $banners = [
+            // === PROMOTIONAL BANNERS (Hero Slider - position: top) ===
             [
-                'title_en' => 'Premium Roses Collection',
-                'title_ar' => 'مجموعة الورود المميزة',
-                'description_en' => 'Discover our exclusive collection of premium roses for every special occasion',
-                'description_ar' => 'اكتشف مجموعتنا الحصرية من الورود المميزة لكل مناسبة خاصة',
-                'image_url' => '/images/banners/hero-roses.jpg',
-                'mobile_image_url' => '/images/banners/hero-roses-mobile.jpg',
-                'link_url' => '/products?category=flowers',
+                'title_en' => 'Glow Up This Season',
+                'title_ar' => 'تألقي هذا الموسم',
+                'description_en' => 'Premium skincare serums now up to 40% off. Your skin deserves the best.',
+                'description_ar' => 'سيرومات العناية بالبشرة الفاخرة الآن بخصم يصل إلى 40%. بشرتك تستحق الأفضل.',
+                'image_url' => 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1400&h=500&fit=crop',
+                'mobile_image_url' => 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=600&fit=crop',
+                'link_url' => '/en/products/vitamin-c-serum',
                 'link_text_en' => 'Shop Now',
                 'link_text_ar' => 'تسوق الآن',
-                'type' => 'hero_slider',
-                'position' => 'center',
-                'sort_order' => 1,
-                'is_active' => true,
-                'background_color' => '#f8f9fa',
-                'text_color' => '#212529',
-                'text_alignment' => 'center',
-            ],
-            [
-                'title_en' => 'Luxury Gift Boxes',
-                'title_ar' => 'صناديق الهدايا الفاخرة',
-                'description_en' => 'Curated gift boxes perfect for birthdays, anniversaries, and special celebrations',
-                'description_ar' => 'صناديق هدايا مختارة بعناية مثالية لأعياد الميلاد والذكريات والاحتفالات الخاصة',
-                'image_url' => '/images/banners/hero-gifts.jpg',
-                'mobile_image_url' => '/images/banners/hero-gifts-mobile.jpg',
-                'link_url' => '/products?category=gift-boxes',
-                'link_text_en' => 'Explore Gifts',
-                'link_text_ar' => 'استكشف الهدايا',
-                'type' => 'hero_slider',
-                'position' => 'center',
-                'sort_order' => 2,
-                'is_active' => true,
-                'background_color' => '#fff5f5',
-                'text_color' => '#991b1b',
-                'text_alignment' => 'center',
-            ],
-            [
-                'title_en' => 'Valentine\'s Day Special',
-                'title_ar' => 'عرض خاص بعيد الحب',
-                'description_en' => 'Express your love with our romantic collection - Up to 30% off',
-                'description_ar' => 'عبر عن حبك مع مجموعتنا الرومانسية - خصم يصل إلى 30%',
-                'image_url' => '/images/banners/valentine-banner.jpg',
-                'mobile_image_url' => '/images/banners/valentine-banner-mobile.jpg',
-                'link_url' => '/products?tag=valentine',
-                'link_text_en' => 'Shop Valentine\'s',
-                'link_text_ar' => 'تسوق عيد الحب',
                 'type' => 'promotional',
                 'position' => 'top',
                 'sort_order' => 1,
                 'is_active' => true,
-                'background_color' => '#fecaca',
-                'text_color' => '#7f1d1d',
-                'text_alignment' => 'center',
+                'background_color' => '#1a1a2e',
+                'text_color' => '#ffffff',
+                'text_alignment' => 'left',
             ],
             [
-                'title_en' => 'Mother\'s Day Collection',
-                'title_ar' => 'مجموعة عيد الأم',
-                'description_en' => 'Show your appreciation with our beautiful Mother\'s Day gifts',
-                'description_ar' => 'أظهر تقديرك مع هدايا عيد الأم الجميلة',
-                'image_url' => '/images/banners/mothers-day-sidebar.jpg',
-                'link_url' => '/products?tag=mother',
-                'link_text_en' => 'For Mom',
-                'link_text_ar' => 'للأم',
-                'type' => 'sidebar_banner',
-                'position' => 'right',
-                'sort_order' => 1,
+                'title_en' => 'Luxury Fragrances',
+                'title_ar' => 'عطور فاخرة',
+                'description_en' => 'Discover designer perfumes & premium Oud oils from the finest houses.',
+                'description_ar' => 'اكتشف عطور المصممين وزيوت العود الفاخرة من أرقى الدور.',
+                'image_url' => 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=1400&h=500&fit=crop',
+                'mobile_image_url' => 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&h=600&fit=crop',
+                'link_url' => '/en/products/designer-perfume-50ml',
+                'link_text_en' => 'Explore Collection',
+                'link_text_ar' => 'استكشف المجموعة',
+                'type' => 'promotional',
+                'position' => 'top',
+                'sort_order' => 2,
                 'is_active' => true,
-                'background_color' => '#f3e8ff',
-                'text_color' => '#581c87',
+                'background_color' => '#0f0f23',
+                'text_color' => '#ffffff',
                 'text_alignment' => 'center',
             ],
             [
-                'title_en' => 'Birthday Celebrations',
-                'title_ar' => 'احتفالات أعياد الميلاد',
-                'description_en' => 'Make every birthday memorable with our special collection',
-                'description_ar' => 'اجعل كل عيد ميلاد لا يُنسى مع مجموعتنا الخاصة',
-                'image_url' => '/images/banners/birthday-category.jpg',
-                'link_url' => '/products?tag=birthday',
-                'link_text_en' => 'Birthday Gifts',
-                'link_text_ar' => 'هدايا أعياد الميلاد',
+                'title_en' => 'Free Shipping on Orders Over 200 SAR',
+                'title_ar' => 'شحن مجاني للطلبات فوق 200 ريال',
+                'description_en' => 'Shop beauty, perfumes, and gifts — delivered straight to your door.',
+                'description_ar' => 'تسوق مستحضرات التجميل والعطور والهدايا — إلى باب بيتك.',
+                'image_url' => 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?w=1400&h=500&fit=crop',
+                'mobile_image_url' => 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?w=800&h=600&fit=crop',
+                'link_url' => '/en/products',
+                'link_text_en' => 'Start Shopping',
+                'link_text_ar' => 'ابدأ التسوق',
+                'type' => 'promotional',
+                'position' => 'top',
+                'sort_order' => 3,
+                'is_active' => true,
+                'background_color' => '#16213e',
+                'text_color' => '#ffffff',
+                'text_alignment' => 'center',
+            ],
+
+            // === CATEGORY BANNERS (Promo Grid - position: middle) ===
+            [
+                'title_en' => 'Skincare Essentials',
+                'title_ar' => 'أساسيات العناية بالبشرة',
+                'description_en' => 'Cleansers, serums & moisturizers',
+                'description_ar' => 'منظفات وسيرومات ومرطبات',
+                'image_url' => 'https://images.unsplash.com/photo-1570194065650-d99fb4b38b17?w=700&h=400&fit=crop',
+                'link_url' => '/en/products/gentle-face-wash',
+                'link_text_en' => 'Shop Skincare',
+                'link_text_ar' => 'تسوق العناية بالبشرة',
                 'type' => 'category_banner',
-                'position' => 'center',
+                'position' => 'middle',
                 'sort_order' => 1,
                 'is_active' => true,
                 'background_color' => '#fef3c7',
                 'text_color' => '#92400e',
-                'text_alignment' => 'center',
+                'text_alignment' => 'left',
+            ],
+            [
+                'title_en' => 'Premium Oud Collection',
+                'title_ar' => 'مجموعة العود الفاخرة',
+                'description_en' => 'Authentic Arabian fragrances',
+                'description_ar' => 'عطور عربية أصيلة',
+                'image_url' => 'https://images.unsplash.com/photo-1594035910387-fea081e83808?w=700&h=400&fit=crop',
+                'link_url' => '/en/products/oud-perfume-oil',
+                'link_text_en' => 'Discover Oud',
+                'link_text_ar' => 'اكتشف العود',
+                'type' => 'category_banner',
+                'position' => 'middle',
+                'sort_order' => 2,
+                'is_active' => true,
+                'background_color' => '#f3e8ff',
+                'text_color' => '#581c87',
+                'text_alignment' => 'left',
             ],
         ];
 
         foreach ($banners as $banner) {
             Banner::create($banner);
         }
+
+        $this->command->info('Created ' . count($banners) . ' marketing banners.');
     }
 }

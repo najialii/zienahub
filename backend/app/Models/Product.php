@@ -15,13 +15,19 @@ class Product extends Model
     protected $fillable = [
         'subcategory_id',
         'slug',
+        'old_price',
         'price',
         'stock_quantity',
         'image_url',
         'status',
+        'brand',
+        'size',
+        'country_of_origin',
+        'tag_id',
+        'tenant_id',
     ];
 
-    protected $appends = ['name', 'description', 'sku'];
+    protected $appends = ['name', 'description', 'how_to_use', 'ingredients', 'benefits', 'sku'];
 
     protected $casts = [
         'price' => 'decimal:2',
@@ -65,6 +71,24 @@ class Product extends Model
         return $translation ? $translation->description : '';
     }
 
+    public function getHowToUseAttribute()
+    {
+        $translation = $this->translation();
+        return $translation ? $translation->how_to_use : '';
+    }
+
+    public function getIngredientsAttribute()
+    {
+        $translation = $this->translation();
+        return $translation ? $translation->ingredients : '';
+    }
+
+    public function getBenefitsAttribute()
+    {
+        $translation = $this->translation();
+        return $translation ? $translation->benefits : '';
+    }
+
     /**
      * Get the SKU attribute (generated from ID and slug).
      */
@@ -75,9 +99,9 @@ class Product extends Model
 
 
 
-    public function productimg ()
+    public function productimg()
     {
-        return this->hasMany(productimg::class);
+        return $this->hasMany(productimg::class);
     }
     
     public function tenant()
@@ -128,10 +152,11 @@ class Product extends Model
     /**
      * Get the tags that belong to this product.
      */
-    public function tags(): BelongsToMany
-    {
-        return $this->belongsToMany(Tag::class);
-    }
+  public function tag(): BelongsTo
+{
+    // Rename this to 'tag' (cleaner than 'tag_id')
+    return $this->belongsTo(Tag::class, 'tag_id');
+}
 
     /**
      * Scope to get only active products.

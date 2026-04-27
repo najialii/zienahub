@@ -109,6 +109,7 @@
     Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
     Route::middleware('auth:sanctum')->get('/profile', [AuthController::class, 'profile']);
     Route::middleware('auth:sanctum')->post('/change-password', [AuthController::class, 'changePassword']);
+    Route::middleware('auth:sanctum')->post('/complete-profile', [AuthController::class, 'completeProfile']);
 
     // Google OAuth routes
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle']);
@@ -143,6 +144,7 @@
     });
 
     // Public API routes
+    Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::get('/categories/slug/{slug}', [CategoryController::class, 'showBySlug']);
 
@@ -325,10 +327,248 @@
     Route::middleware(['auth:sanctum', 'super_admin'])->group(function () {
         Route::get('/super-admin/dashboard', [TenantManagementController::class, 'dashboard']);
         Route::get('/super-admin/tenants', [TenantManagementController::class, 'index']);
+        Route::get('/super-admin/tenants/{tenant}', [TenantManagementController::class, 'show']);
         Route::post('/super-admin/tenants', [TenantManagementController::class, 'store']);
         Route::put('/super-admin/tenants/{tenant}', [TenantManagementController::class, 'update']);
         Route::put('/super-admin/tenants/{tenant}/subscription', [TenantManagementController::class, 'updateSubscription']);
+        Route::post('/super-admin/tenants/{tenant}/approve', [TenantManagementController::class, 'approveTenant']);
+        Route::post('/super-admin/tenants/{tenant}/reject', [TenantManagementController::class, 'rejectTenant']);
         Route::delete('/super-admin/tenants/{tenant}', [TenantManagementController::class, 'destroy']);
+
+        // Pricing tiers management
+        Route::get('/super-admin/pricing-tiers', [\App\Http\Controllers\SuperAdmin\PricingTierController::class, 'index']);
+        Route::post('/super-admin/pricing-tiers', [\App\Http\Controllers\SuperAdmin\PricingTierController::class, 'store']);
+        Route::put('/super-admin/pricing-tiers/{pricingTier}', [\App\Http\Controllers\SuperAdmin\PricingTierController::class, 'update']);
+        Route::delete('/super-admin/pricing-tiers/{pricingTier}', [\App\Http\Controllers\SuperAdmin\PricingTierController::class, 'destroy']);
+
+        // Super-admin: all products across all tenants
+        Route::get('/super-admin/products', function (Request $request) {
+            try {
+                $perPage = $request->get('per_page', 20);
+                $page    = $request->get('page', 1);
+
+                $query = DB::table('products')
+                    ->leftJoin('product_translations', function($join) {
+                        $join->on('product_translations.product_id', '=', 'products.id')
+                             ->where('product_translations.locale', '=', 'en');
+                    })
+                    ->leftJoin('tenants', 'tenants.id', '=', 'products.tenant_id')
+                    ->leftJoin('subcategories', 'subcategories.id', '=', 'products.subcategory_id')
+                    ->leftJoin('subcategory_translations', function($join) {
+                        $join->on('subcategory_translations.subcategory_id', '=', 'subcategories.id')
+                             ->where('subcategory_translations.locale', '=', 'en');
+                    })
+                    ->leftJoin('categories', 'categories.id', '=', 'subcategories.category_id')
+                    ->leftJoin('category_translations', function($join) {
+                        $join->on('category_translations.category_id', '=', 'categories.id')
+                             ->where('category_translations.locale', '=', 'en');
+                    })
+                    ->select(
+                        'products.id',
+                        'products.slug',
+                        'products.price',
+                        'products.old_price',
+                        'products.stock_quantity',
+                        'products.status',
+                        'products.image_url',
+                        'products.brand',
+                        'products.created_at',
+                        'products.tenant_id',
+                        'products.tag_id',
+                        'product_translations.name',
+                        'tenants.name as tenant_name',
+                        'tenants.slug as tenant_slug',
+                        'tenants.is_active as tenant_is_active',
+                        'subcategories.id as subcategory_id',
+                        'subcategory_translations.name as subcategory_name',
+                        'categories.id as category_id',
+                        'category_translations.name as category_name'
+                    )
+                    ->orderBy('products.created_at', 'desc');
+
+                if ($request->filled('search')) {
+                    $search = $request->search;
+                    $query->where(function ($q) use ($search) {
+                        $q->where('product_translations.name', 'like', "%{$search}%")
+                          ->orWhere('products.slug', 'like', "%{$search}%");
+                    });
+                }
+
+                if ($request->filled('tenant_id')) {
+                    $query->where('products.tenant_id', $request->tenant_id);
+                }
+
+                if ($request->filled('status')) {
+                    $query->where('products.status', $request->status);
+                }
+
+                if ($request->filled('tag_id')) {
+                    $query->where('products.tag_id', $request->tag_id);
+                }
+
+                $products = $query->paginate($perPage, ['*'], 'page', $page);
+
+                $formatted = $products->getCollection()->map(function ($product) {
+                    return [
+                        'id'             => $product->id,
+                        'name'           => $product->name,
+                        'slug'           => $product->slug,
+                        'price'          => (float) $product->price,
+                        'old_price'      => $product->old_price ? (float) $product->old_price : null,
+                        'stock_quantity' => $product->stock_quantity,
+                        'status'         => $product->status,
+                        'image_url'      => $product->image_url ? url($product->image_url) : null,
+                        'sku'            => $product->slug,
+                        'brand'          => $product->brand,
+                        'tag_id'         => $product->tag_id,
+                        'created_at'     => $product->created_at,
+                        'tenant'         => $product->tenant_id ? [
+                            'id'        => $product->tenant_id,
+                            'name'      => $product->tenant_name,
+                            'slug'      => $product->tenant_slug,
+                            'is_active' => (bool) $product->tenant_is_active,
+                        ] : null,
+                        'subcategory'    => $product->subcategory_id ? [
+                            'id'   => $product->subcategory_id,
+                            'name' => $product->subcategory_name,
+                            'category' => $product->category_id ? [
+                                'id'   => $product->category_id,
+                                'name' => $product->category_name,
+                            ] : null,
+                        ] : null,
+                    ];
+                });
+
+                return response()->json([
+                    'data'         => $formatted,
+                    'current_page' => $products->currentPage(),
+                    'last_page'    => $products->lastPage(),
+                    'per_page'     => $products->perPage(),
+                    'total'        => $products->total(),
+                    'from'         => $products->firstItem(),
+                    'to'           => $products->lastItem(),
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
+        });
+
+        // Get single product for editing
+        Route::get('/super-admin/products/{id}', function ($id) {
+            try {
+                $product = DB::table('products')
+                    ->leftJoin('product_translations', function($join) {
+                        $join->on('product_translations.product_id', '=', 'products.id')
+                             ->where('product_translations.locale', '=', 'en');
+                    })
+                    ->leftJoin('tenants', 'tenants.id', '=', 'products.tenant_id')
+                    ->leftJoin('subcategories', 'subcategories.id', '=', 'products.subcategory_id')
+                    ->leftJoin('subcategory_translations', function($join) {
+                        $join->on('subcategory_translations.subcategory_id', '=', 'subcategories.id')
+                             ->where('subcategory_translations.locale', '=', 'en');
+                    })
+                    ->leftJoin('categories', 'categories.id', '=', 'subcategories.category_id')
+                    ->leftJoin('category_translations', function($join) {
+                        $join->on('category_translations.category_id', '=', 'categories.id')
+                             ->where('category_translations.locale', '=', 'en');
+                    })
+                    ->where('products.id', $id)
+                    ->select(
+                        'products.id',
+                        'products.slug',
+                        'products.price',
+                        'products.old_price',
+                        'products.stock_quantity',
+                        'products.status',
+                        'products.image_url',
+                        'products.brand',
+                        'products.created_at',
+                        'products.tenant_id',
+                        'products.tag_id',
+                        'product_translations.name',
+                        'tenants.name as tenant_name',
+                        'tenants.slug as tenant_slug',
+                        'tenants.is_active as tenant_is_active',
+                        'subcategories.id as subcategory_id',
+                        'subcategory_translations.name as subcategory_name',
+                        'categories.id as category_id',
+                        'category_translations.name as category_name'
+                    )
+                    ->first();
+
+                if (!$product) {
+                    return response()->json(['error' => 'Product not found'], 404);
+                }
+
+                return response()->json([
+                    'id'             => $product->id,
+                    'name'           => $product->name,
+                    'slug'           => $product->slug,
+                    'price'          => (float) $product->price,
+                    'old_price'      => $product->old_price ? (float) $product->old_price : null,
+                    'stock_quantity' => $product->stock_quantity,
+                    'status'         => $product->status,
+                    'image_url'      => $product->image_url ? url($product->image_url) : null,
+                    'brand'          => $product->brand,
+                    'tag_id'         => $product->tag_id,
+                    'created_at'     => $product->created_at,
+                    'tenant'         => $product->tenant_id ? [
+                        'id'        => $product->tenant_id,
+                        'name'      => $product->tenant_name,
+                        'slug'      => $product->tenant_slug,
+                        'is_active' => (bool) $product->tenant_is_active,
+                    ] : null,
+                    'subcategory'    => $product->subcategory_id ? [
+                        'id'   => $product->subcategory_id,
+                        'name' => $product->subcategory_name,
+                        'category' => $product->category_id ? [
+                            'id'   => $product->category_id,
+                            'name' => $product->category_name,
+                        ] : null,
+                    ] : null,
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
+        });
+
+        // Bulk assign tags to products
+        Route::post('/super-admin/products/bulk-assign-tags', function (Request $request) {
+            $validated = $request->validate([
+                'product_ids' => 'required|array',
+                'product_ids.*' => 'exists:products,id',
+                'tag_id' => 'nullable|exists:tags,id',
+            ]);
+
+            DB::table('products')
+                ->whereIn('id', $validated['product_ids'])
+                ->update(['tag_id' => $validated['tag_id']]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tags assigned successfully',
+            ]);
+        });
+
+        // Update single product tenant/tag
+        // Update single product tag (super admin can only edit tags)
+        Route::put('/super-admin/products/{id}', function (Request $request, $id) {
+            $validated = $request->validate([
+                'tag_id' => 'nullable|exists:tags,id',
+            ]);
+
+            DB::table('products')
+                ->where('id', $id)
+                ->update([
+                    'tag_id' => $validated['tag_id'],
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product tag updated successfully',
+            ]);
+        });
+
         Route::get('/admin/categories', [App\Http\Controllers\Admin\CategoryController::class, 'index']);
         Route::get('/admin/subcategories', [App\Http\Controllers\Admin\SubcategoryController::class, 'index']);
         Route::get('/admin/categories/{id}', [App\Http\Controllers\Admin\CategoryController::class, 'show']);

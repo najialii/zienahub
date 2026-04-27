@@ -86,7 +86,7 @@ export default function OrderDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
-        <Header />
+        {/* <Header /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mb-4"></div>

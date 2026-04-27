@@ -1,70 +1,85 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import Price from './Price';
+
+interface Category {
+  id: number;
+  name: string;
+  name_ar?: string;
+  slug: string;
+}
+
+interface Subcategory {
+  id: number;
+  name: string;
+  name_ar?: string;
+  slug: string;
+  category_id?: number;
+}
+
+interface Tag {
+  id: number;
+  name_en: string;
+  name_ar: string;
+  slug: string;
+}
 
 interface FilterProps {
   onFilterChange: (filters: FilterState) => void;
   onClose?: () => void;
   isMobile?: boolean;
+  categories?: Category[];
+  subcategories?: Subcategory[];
+  tags?: Tag[];
+  priceRange?: { min: number; max: number };
 }
 
 export interface FilterState {
-  categories: string[];
+  categories: number[];
+  subcategories: number[];
+  tags: number[];
   priceRange: { min: number; max: number };
-  colors: string[];
-  occasions: string[];
   sortBy: string;
   inStock: boolean;
 }
 
-export default function ProductFilters({ onFilterChange, onClose, isMobile = false }: FilterProps) {
+export default function ProductFilters({ 
+  onFilterChange, 
+  onClose, 
+  isMobile = false,
+  categories = [],
+  subcategories = [],
+  tags = [],
+  priceRange = { min: 0, max: 1000 }
+}: FilterProps) {
   const locale = useLocale();
   
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
-    priceRange: { min: 0, max: 1000 },
-    colors: [],
-    occasions: [],
+    subcategories: [],
+    tags: [],
+    priceRange: priceRange,
     sortBy: 'newest',
     inStock: false,
   });
 
   const [expandedSections, setExpandedSections] = useState({
     category: true,
+    subcategory: false,
+    tag: false,
     price: true,
-    color: false,
-    occasion: false,
   });
 
-  const categories = [
-    { id: 'roses', name: locale === 'en' ? 'Roses' : 'ورود' },
-    { id: 'tulips', name: locale === 'en' ? 'Tulips' : 'توليب' },
-    { id: 'orchids', name: locale === 'en' ? 'Orchids' : 'أوركيد' },
-    { id: 'bouquets', name: locale === 'en' ? 'Bouquets' : 'باقات' },
-    { id: 'gift-boxes', name: locale === 'en' ? 'Gift Boxes' : 'صناديق هدايا' },
-    { id: 'chocolates', name: locale === 'en' ? 'Chocolates' : 'شوكولاتة' },
-  ];
-
-  const colors = [
-    { id: 'red', name: locale === 'en' ? 'Red' : 'أحمر', hex: '#EF4444' },
-    { id: 'pink', name: locale === 'en' ? 'Pink' : 'وردي', hex: '#EC4899' },
-    { id: 'white', name: locale === 'en' ? 'White' : 'أبيض', hex: '#FFFFFF' },
-    { id: 'yellow', name: locale === 'en' ? 'Yellow' : 'أصفر', hex: '#FBBF24' },
-    { id: 'purple', name: locale === 'en' ? 'Purple' : 'بنفسجي', hex: '#A855F7' },
-    { id: 'mixed', name: locale === 'en' ? 'Mixed' : 'مختلط', hex: 'linear-gradient(45deg, #EF4444, #EC4899, #A855F7)' },
-  ];
-
-  const occasions = [
-    { id: 'birthday', name: locale === 'en' ? 'Birthday' : 'عيد ميلاد' },
-    { id: 'anniversary', name: locale === 'en' ? 'Anniversary' : 'ذكرى سنوية' },
-    { id: 'wedding', name: locale === 'en' ? 'Wedding' : 'زفاف' },
-    { id: 'congratulations', name: locale === 'en' ? 'Congratulations' : 'تهنئة' },
-    { id: 'sympathy', name: locale === 'en' ? 'Sympathy' : 'تعازي' },
-    { id: 'romantic', name: locale === 'en' ? 'Romantic' : 'رومانسي' },
-  ];
+  // Update price range when prop changes
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      priceRange: priceRange
+    }));
+  }, [priceRange.min, priceRange.max]);
 
   const sortOptions = [
     { id: 'newest', name: locale === 'en' ? 'Newest First' : 'الأحدث أولاً' },
@@ -78,7 +93,7 @@ export default function ProductFilters({ onFilterChange, onClose, isMobile = fal
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const handleCategoryChange = (categoryId: string) => {
+  const handleCategoryChange = (categoryId: number) => {
     const newCategories = filters.categories.includes(categoryId)
       ? filters.categories.filter(c => c !== categoryId)
       : [...filters.categories, categoryId];
@@ -88,22 +103,22 @@ export default function ProductFilters({ onFilterChange, onClose, isMobile = fal
     onFilterChange(newFilters);
   };
 
-  const handleColorChange = (colorId: string) => {
-    const newColors = filters.colors.includes(colorId)
-      ? filters.colors.filter(c => c !== colorId)
-      : [...filters.colors, colorId];
+  const handleSubcategoryChange = (subcategoryId: number) => {
+    const newSubcategories = filters.subcategories.includes(subcategoryId)
+      ? filters.subcategories.filter(s => s !== subcategoryId)
+      : [...filters.subcategories, subcategoryId];
     
-    const newFilters = { ...filters, colors: newColors };
+    const newFilters = { ...filters, subcategories: newSubcategories };
     setFilters(newFilters);
     onFilterChange(newFilters);
   };
 
-  const handleOccasionChange = (occasionId: string) => {
-    const newOccasions = filters.occasions.includes(occasionId)
-      ? filters.occasions.filter(o => o !== occasionId)
-      : [...filters.occasions, occasionId];
+  const handleTagChange = (tagId: number) => {
+    const newTags = filters.tags.includes(tagId)
+      ? filters.tags.filter(t => t !== tagId)
+      : [...filters.tags, tagId];
     
-    const newFilters = { ...filters, occasions: newOccasions };
+    const newFilters = { ...filters, tags: newTags };
     setFilters(newFilters);
     onFilterChange(newFilters);
   };
@@ -132,9 +147,9 @@ export default function ProductFilters({ onFilterChange, onClose, isMobile = fal
   const clearAllFilters = () => {
     const newFilters: FilterState = {
       categories: [],
-      priceRange: { min: 0, max: 1000 },
-      colors: [],
-      occasions: [],
+      subcategories: [],
+      tags: [],
+      priceRange: priceRange,
       sortBy: 'newest',
       inStock: false,
     };
@@ -144,8 +159,8 @@ export default function ProductFilters({ onFilterChange, onClose, isMobile = fal
 
   const activeFiltersCount = 
     filters.categories.length + 
-    filters.colors.length + 
-    filters.occasions.length + 
+    filters.subcategories.length + 
+    filters.tags.length + 
     (filters.inStock ? 1 : 0);
 
   return (
@@ -213,32 +228,100 @@ export default function ProductFilters({ onFilterChange, onClose, isMobile = fal
         </div>
 
         {/* Categories */}
-        <div>
-          <button
-            onClick={() => toggleSection('category')}
-            className="w-full flex items-center justify-between mb-3"
-          >
-            <span className="text-sm font-semibold text-neutral-900">
-              {locale === 'en' ? 'Categories' : 'الفئات'}
-            </span>
-            {expandedSections.category ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-          {expandedSections.category && (
-            <div className="space-y-2">
-              {categories.map(category => (
-                <label key={category.id} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={filters.categories.includes(category.id)}
-                    onChange={() => handleCategoryChange(category.id)}
-                    className="w-4 h-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-300"
-                  />
-                  <span className="text-sm text-neutral-700">{category.name}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
+        {categories.length > 0 && (
+          <div>
+            <button
+              onClick={() => toggleSection('category')}
+              className="w-full flex items-center justify-between mb-3"
+            >
+              <span className="text-sm font-semibold text-neutral-900">
+                {locale === 'en' ? 'Categories' : 'الفئات'}
+              </span>
+              {expandedSections.category ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {expandedSections.category && (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {categories.map(category => (
+                  <label key={category.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={filters.categories.includes(category.id)}
+                      onChange={() => handleCategoryChange(category.id)}
+                      className="w-4 h-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-300"
+                    />
+                    <span className="text-sm text-neutral-700">
+                      {locale === 'ar' && category.name_ar ? category.name_ar : category.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Subcategories */}
+        {subcategories.length > 0 && (
+          <div>
+            <button
+              onClick={() => toggleSection('subcategory')}
+              className="w-full flex items-center justify-between mb-3"
+            >
+              <span className="text-sm font-semibold text-neutral-900">
+                {locale === 'en' ? 'Subcategories' : 'الفئات الفرعية'}
+              </span>
+              {expandedSections.subcategory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {expandedSections.subcategory && (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {subcategories.map(subcategory => (
+                  <label key={subcategory.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={filters.subcategories.includes(subcategory.id)}
+                      onChange={() => handleSubcategoryChange(subcategory.id)}
+                      className="w-4 h-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-300"
+                    />
+                    <span className="text-sm text-neutral-700">
+                      {locale === 'ar' && subcategory.name_ar ? subcategory.name_ar : subcategory.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div>
+            <button
+              onClick={() => toggleSection('tag')}
+              className="w-full flex items-center justify-between mb-3"
+            >
+              <span className="text-sm font-semibold text-neutral-900">
+                {locale === 'en' ? 'Tags' : 'العلامات'}
+              </span>
+              {expandedSections.tag ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {expandedSections.tag && (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {tags.map(tag => (
+                  <label key={tag.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={filters.tags.includes(tag.id)}
+                      onChange={() => handleTagChange(tag.id)}
+                      className="w-4 h-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-300"
+                    />
+                    <span className="text-sm text-neutral-700">
+                      {locale === 'ar' ? tag.name_ar : tag.name_en}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Price Range */}
         <div>
@@ -275,68 +358,6 @@ export default function ProductFilters({ onFilterChange, onClose, isMobile = fal
                 {' - '}
                 <Price amount={filters.priceRange.max} showDecimals={false} symbolClassName="w-3 h-3" />
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Colors */}
-        <div>
-          <button
-            onClick={() => toggleSection('color')}
-            className="w-full flex items-center justify-between mb-3"
-          >
-            <span className="text-sm font-semibold text-neutral-900">
-              {locale === 'en' ? 'Colors' : 'الألوان'}
-            </span>
-            {expandedSections.color ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-          {expandedSections.color && (
-            <div className="grid grid-cols-3 gap-2">
-              {colors.map(color => (
-                <button
-                  key={color.id}
-                  onClick={() => handleColorChange(color.id)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all ${
-                    filters.colors.includes(color.id)
-                      ? 'border-neutral-900 bg-neutral-50'
-                      : 'border-neutral-200 hover:border-neutral-300'
-                  }`}
-                >
-                  <div
-                    className="w-8 h-8 rounded-full border border-neutral-200"
-                    style={{ background: color.hex }}
-                  />
-                  <span className="text-xs text-neutral-700">{color.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Occasions */}
-        <div>
-          <button
-            onClick={() => toggleSection('occasion')}
-            className="w-full flex items-center justify-between mb-3"
-          >
-            <span className="text-sm font-semibold text-neutral-900">
-              {locale === 'en' ? 'Occasions' : 'المناسبات'}
-            </span>
-            {expandedSections.occasion ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-          {expandedSections.occasion && (
-            <div className="space-y-2">
-              {occasions.map(occasion => (
-                <label key={occasion.id} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={filters.occasions.includes(occasion.id)}
-                    onChange={() => handleOccasionChange(occasion.id)}
-                    className="w-4 h-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-300"
-                  />
-                  <span className="text-sm text-neutral-700">{occasion.name}</span>
-                </label>
-              ))}
             </div>
           )}
         </div>

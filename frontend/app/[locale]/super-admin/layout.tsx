@@ -12,7 +12,9 @@ import {
   Settings,
   Hash, 
   Image as ImageIcon, 
-  LayoutDashboard 
+  LayoutDashboard,
+  Package,
+  DollarSign
 } from 'lucide-react';
 import { useUserStore } from '@/lib/userStore';
 
@@ -55,10 +57,25 @@ export default function SuperAdminLayout({
       href: `/${locale}/super-admin`, 
       icon: LayoutDashboard 
     },
+     { 
+      name: locale === 'ar' ? 'المتاجر (Tenants)' : 'Orders', 
+      href: `/${locale}/super-admin/orders`, 
+      icon: Building2 
+    },
     { 
-      name: locale === 'ar' ? 'المتاجر (Tenants)' : 'Tenants', 
+      name: locale === 'ar' ? 'المتاجر (Tenants)' : 'Vendors', 
       href: `/${locale}/super-admin/vendors`, 
       icon: Building2 
+    },
+    { 
+      name: locale === 'ar' ? 'خطط التسعير' : 'Pricing Tiers', 
+      href: `/${locale}/super-admin/pricing-tiers`, 
+      icon: DollarSign 
+    },
+    { 
+      name: locale === 'ar' ? 'المنتجات' : 'Products', 
+      href: `/${locale}/super-admin/products`, 
+      icon: Package 
     },
     { 
       name: locale === 'ar' ? 'الفئات العالمية' : 'Global Categories', 
@@ -75,35 +92,21 @@ export default function SuperAdminLayout({
     href: `/${locale}/super-admin/banners`, 
       icon: ImageIcon 
     },
-
+    { 
+      name: locale === 'ar' ? 'تخطيط الصفحة الرئيسية' : 'Home Layout', 
+      href: `/${locale}/super-admin/home-layout`, 
+      icon: LayoutDashboard 
+    },
+    { 
+      name: locale === 'ar' ? 'موظفو التوصيل' : 'Delivery Personnel', 
+      href: `/${locale}/super-admin/delivery`, 
+      icon: Truck  
+    },
     { 
       name: locale === 'ar' ? 'الإعدادات' : 'Settings', 
       href: `/${locale}/super-admin/settings`, 
       icon: Settings 
     },
-
-     { 
-      name: locale === 'ar' ? 'تخطيط الصفحة الرئيسية' : 'Home Layout', 
-      href: `/${locale}/super-admin/home-layout`, 
-      icon: LayoutDashboard 
-    },
-
-     { 
-      name: locale === 'ar' ? 'موظفو التوصيل' : 'Delivery Personnel', 
-      href: `/${locale}/super-admin/delivery`, 
-      icon: Truck  
-    },
-
-    // { 
-    //   name: locale === 'ar' ? 'إشعارات التوصيل' : 'Delivery Notifications', 
-    //   href: `/${locale}/admin/delivery-notifications`, 
-    //   icon: MessageCircle 
-    // },
-    // { 
-    //   name: locale === 'ar' ? 'عرض إدارة المتجر' : 'Tenant Admin View', 
-    //   href: `/${locale}/admin`, 
-    //   icon: Users 
-    // },
   ];
 
   return (

@@ -8,7 +8,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
+      colors: { 
         // Monochrome - Black, White, Gray only
         primary: {
           DEFAULT: '#050505', // Pure black

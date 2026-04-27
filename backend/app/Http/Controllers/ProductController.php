@@ -18,7 +18,7 @@ class ProductController extends Controller
     {
         $locale = $request->header('Accept-Language', 'en');
         
-        $query = Product::with(['subcategory.category', 'translations']);
+        $query = Product::with(['subcategory.category', 'translations', 'tag']);
 
         if ($request->has('category_id')) {
             $query->whereHas('subcategory', function($q) use ($request) {
@@ -44,19 +44,29 @@ class ProductController extends Controller
                     'status' => $product->status,
                     'sku' => $product->sku,
                     'subcategory_id' => $product->subcategory_id,
+                    'tag_id' => $product->tag_id,
                     'created_at' => $product->created_at,
                     'updated_at' => $product->updated_at,
                     'subcategory' => $product->subcategory ? [
                         'id' => $product->subcategory->id,
                         'name' => $product->subcategory->name,
+                        'slug' => $product->subcategory->slug ?? '',
                         'category' => $product->subcategory->category ? [
                             'id' => $product->subcategory->category->id,
                             'name' => $product->subcategory->category->name,
+                            'slug' => $product->subcategory->category->slug ?? '',
                         ] : null,
                     ] : null,
                     'category' => $product->subcategory && $product->subcategory->category ? [
                         'id' => $product->subcategory->category->id,
                         'name' => $product->subcategory->category->name,
+                        'slug' => $product->subcategory->category->slug ?? '',
+                    ] : null,
+                    'tag' => $product->tag ? [
+                        'id' => $product->tag->id,
+                        'name_en' => $product->tag->name_en,
+                        'name_ar' => $product->tag->name_ar,
+                        'slug' => $product->tag->slug,
                     ] : null,
                 ];
             });
@@ -102,7 +112,7 @@ class ProductController extends Controller
     {
         $locale = $request->header('Accept-Language', 'en');
         
-        $product = Product::with(['subcategory.category'])
+        $product = Product::with(['subcategory.category', 'productimg'])
             ->where('slug', $slug)
             ->firstOrFail();
 
@@ -112,9 +122,22 @@ class ProductController extends Controller
             'slug' => $product->slug,
             'sku' => $product->sku,
             'description' => $product->description,
+            'how_to_use' => $product->how_to_use,
+            'ingredients' => $product->ingredients,
+            'benefits' => $product->benefits,
+            'brand' => $product->brand,
+            'size' => $product->size,
+            'country_of_origin' => $product->country_of_origin,
             'price' => (float) $product->price,
             'stock_quantity' => $product->stock_quantity,
             'image_url' => $product->image_url ? url($product->image_url) : null,
+            'images' => $product->productimg ? $product->productimg->map(function ($img) {
+                return [
+                    'id' => $img->id,
+                    'image_url' => url($img->img_path),
+                    'sort_order' => $img->sort_order
+                ];
+            })->sortBy('sort_order')->values()->all() : [],
             'status' => $product->status,
             'tenant_id'=> $product->tenant_id,
             'subcategory_id' => $product->subcategory_id,
@@ -364,11 +387,21 @@ class ProductController extends Controller
     public function adminShow($id)
     {
         try {
-            $product = Product::with(['subcategory.category', 'translations'])->findOrFail($id);
+            $product = Product::with(['subcategory.category', 'translations', 'productimg'])->findOrFail($id);
+            
+            // Format product images properly for the admin interface
+            $productData = $product->toArray();
+            $productData['images'] = $product->productimg ? $product->productimg->map(function ($img) {
+                return [
+                    'id' => $img->id,
+                    'image_url' => url($img->img_path),
+                    'sort_order' => $img->sort_order
+                ];
+            })->sortBy('sort_order')->values()->all() : [];
             
             return response()->json([
                 'success' => true,
-                'data' => $product
+                'data' => $productData
             ], 200);
 
         } catch (ModelNotFoundException $e) {
@@ -405,7 +438,19 @@ class ProductController extends Controller
             $description = $validated['description'];
             $nameAr = $validated['name_ar'] ?? $name;
             $descriptionAr = $validated['description_ar'] ?? $description;
-            unset($validated['name'], $validated['description'], $validated['name_ar'], $validated['description_ar']);
+            $howToUse = $validated['how_to_use'] ?? null;
+            $ingredients = $validated['ingredients'] ?? null;
+            $benefits = $validated['benefits'] ?? null;
+            $howToUseAr = $validated['how_to_use_ar'] ?? $howToUse;
+            $ingredientsAr = $validated['ingredients_ar'] ?? $ingredients;
+            $benefitsAr = $validated['benefits_ar'] ?? $benefits;
+            
+            unset(
+                $validated['name'], $validated['description'], 
+                $validated['name_ar'], $validated['description_ar'],
+                $validated['how_to_use'], $validated['ingredients'], $validated['benefits'],
+                $validated['how_to_use_ar'], $validated['ingredients_ar'], $validated['benefits_ar']
+            );
             
             // Handle image upload
             if ($request->hasFile('image')) {
@@ -428,15 +473,34 @@ class ProductController extends Controller
                 'locale' => 'en',
                 'name' => $name,
                 'description' => $description,
+                'how_to_use' => $howToUse,
+                'ingredients' => $ingredients,
+                'benefits' => $benefits,
             ]);
             
             $product->translations()->create([
                 'locale' => 'ar',
                 'name' => $nameAr,
                 'description' => $descriptionAr,
+                'how_to_use' => $howToUseAr,
+                'ingredients' => $ingredientsAr,
+                'benefits' => $benefitsAr,
             ]);
             
-            $product->load('subcategory.category', 'translations');
+            // Handle multiple gallery images
+            if ($request->hasFile('gallery_images')) {
+                $sortOrder = 1;
+                foreach ($request->file('gallery_images') as $galleryImage) {
+                    $imageName = time() . '_' . uniqid() . '_' . $galleryImage->getClientOriginalName();
+                    $imagePath = $galleryImage->storeAs('images/products/gallery', $imageName, 'public');
+                    $product->productimg()->create([
+                        'img_path' => '/storage/' . $imagePath,
+                        'sort_order' => $sortOrder++
+                    ]);
+                }
+            }
+            
+            $product->load('subcategory.category', 'translations', 'productimg');
 
             return response()->json([
                 'success' => true,
@@ -467,25 +531,26 @@ class ProductController extends Controller
             // Extract translation fields if they exist
             $name = null;
             $description = null;
+            $howToUse = null;
+            $ingredients = null;
+            $benefits = null;
             $nameAr = null;
             $descriptionAr = null;
+            $howToUseAr = null;
+            $ingredientsAr = null;
+            $benefitsAr = null;
             
-            if (isset($validated['name'])) {
-                $name = $validated['name'];
-                unset($validated['name']);
-            }
-            if (isset($validated['description'])) {
-                $description = $validated['description'];
-                unset($validated['description']);
-            }
-            if (isset($validated['name_ar'])) {
-                $nameAr = $validated['name_ar'];
-                unset($validated['name_ar']);
-            }
-            if (isset($validated['description_ar'])) {
-                $descriptionAr = $validated['description_ar'];
-                unset($validated['description_ar']);
-            }
+            if (isset($validated['name'])) { $name = $validated['name']; unset($validated['name']); }
+            if (isset($validated['description'])) { $description = $validated['description']; unset($validated['description']); }
+            if (isset($validated['how_to_use'])) { $howToUse = $validated['how_to_use']; unset($validated['how_to_use']); }
+            if (isset($validated['ingredients'])) { $ingredients = $validated['ingredients']; unset($validated['ingredients']); }
+            if (isset($validated['benefits'])) { $benefits = $validated['benefits']; unset($validated['benefits']); }
+            
+            if (isset($validated['name_ar'])) { $nameAr = $validated['name_ar']; unset($validated['name_ar']); }
+            if (isset($validated['description_ar'])) { $descriptionAr = $validated['description_ar']; unset($validated['description_ar']); }
+            if (isset($validated['how_to_use_ar'])) { $howToUseAr = $validated['how_to_use_ar']; unset($validated['how_to_use_ar']); }
+            if (isset($validated['ingredients_ar'])) { $ingredientsAr = $validated['ingredients_ar']; unset($validated['ingredients_ar']); }
+            if (isset($validated['benefits_ar'])) { $benefitsAr = $validated['benefits_ar']; unset($validated['benefits_ar']); }
 
             // Handle image upload
             if ($request->hasFile('image')) {
@@ -506,59 +571,92 @@ class ProductController extends Controller
             // Update the product
             $product->update($validated);
             
-            // Update translations if name or description provided
-            if ($name || $description || $nameAr || $descriptionAr) {
+            // Update translations if any text fields provided
+            if ($name || $description || $nameAr || $descriptionAr || $howToUse || $ingredients || $benefits || $howToUseAr || $ingredientsAr || $benefitsAr) {
                 // Update English translation
-                if ($name || $description) {
+                if ($name || $description || $howToUse || $ingredients || $benefits) {
                     $enTranslation = $product->translations()->where('locale', 'en')->first();
                     if ($enTranslation) {
                         $enTranslation->update([
                             'name' => $name ?: $enTranslation->name,
-                            'description' => $description ?: $enTranslation->description,
+                            'description' => $description !== null ? $description : $enTranslation->description,
+                            'how_to_use' => $howToUse !== null ? $howToUse : $enTranslation->how_to_use,
+                            'ingredients' => $ingredients !== null ? $ingredients : $enTranslation->ingredients,
+                            'benefits' => $benefits !== null ? $benefits : $enTranslation->benefits,
                         ]);
                     } else {
                         $product->translations()->create([
                             'locale' => 'en',
                             'name' => $name,
                             'description' => $description,
+                            'how_to_use' => $howToUse,
+                            'ingredients' => $ingredients,
+                            'benefits' => $benefits,
                         ]);
                     }
                 }
                 
                 // Update Arabic translation
-                if ($nameAr || $descriptionAr) {
+                if ($nameAr || $descriptionAr || $howToUseAr || $ingredientsAr || $benefitsAr) {
                     $arTranslation = $product->translations()->where('locale', 'ar')->first();
                     if ($arTranslation) {
                         $arTranslation->update([
                             'name' => $nameAr ?: $arTranslation->name,
-                            'description' => $descriptionAr ?: $arTranslation->description,
+                            'description' => $descriptionAr !== null ? $descriptionAr : $arTranslation->description,
+                            'how_to_use' => $howToUseAr !== null ? $howToUseAr : $arTranslation->how_to_use,
+                            'ingredients' => $ingredientsAr !== null ? $ingredientsAr : $arTranslation->ingredients,
+                            'benefits' => $benefitsAr !== null ? $benefitsAr : $arTranslation->benefits,
                         ]);
                     } else {
                         $product->translations()->create([
                             'locale' => 'ar',
                             'name' => $nameAr ?: $name,
-                            'description' => $descriptionAr ?: $description,
+                            'description' => $descriptionAr !== null ? $descriptionAr : $description,
+                            'how_to_use' => $howToUseAr !== null ? $howToUseAr : $howToUse,
+                            'ingredients' => $ingredientsAr !== null ? $ingredientsAr : $ingredients,
+                            'benefits' => $benefitsAr !== null ? $benefitsAr : $benefits,
                         ]);
                     }
-                } else if ($name || $description) {
+                } else if ($name || $description || $howToUse || $ingredients || $benefits) {
                     // If only English provided, also update Arabic with same values
                     $arTranslation = $product->translations()->where('locale', 'ar')->first();
                     if ($arTranslation) {
                         $arTranslation->update([
                             'name' => $name ?: $arTranslation->name,
-                            'description' => $description ?: $arTranslation->description,
+                            'description' => $description !== null ? $description : $arTranslation->description,
+                            'how_to_use' => $howToUse !== null ? $howToUse : $arTranslation->how_to_use,
+                            'ingredients' => $ingredients !== null ? $ingredients : $arTranslation->ingredients,
+                            'benefits' => $benefits !== null ? $benefits : $arTranslation->benefits,
                         ]);
                     } else {
                         $product->translations()->create([
                             'locale' => 'ar',
                             'name' => $name,
                             'description' => $description,
+                            'how_to_use' => $howToUse,
+                            'ingredients' => $ingredients,
+                            'benefits' => $benefits,
                         ]);
                     }
                 }
             }
             
-            $product->load('subcategory.category', 'translations');
+            // Handle multiple gallery images appending
+            if ($request->hasFile('gallery_images')) {
+                $maxSortOrder = $product->productimg()->max('sort_order') ?? 0;
+                $sortOrder = $maxSortOrder + 1;
+                
+                foreach ($request->file('gallery_images') as $galleryImage) {
+                    $imageName = time() . '_' . uniqid() . '_' . $galleryImage->getClientOriginalName();
+                    $imagePath = $galleryImage->storeAs('images/products/gallery', $imageName, 'public');
+                    $product->productimg()->create([
+                        'img_path' => '/storage/' . $imagePath,
+                        'sort_order' => $sortOrder++
+                    ]);
+                }
+            }
+            
+            $product->load('subcategory.category', 'translations', 'productimg');
 
             return response()->json([
                 'success' => true,

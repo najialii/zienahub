@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('home_sections', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // hero, promotional_top, product_row_1, featured_tags, etc.
+            $table->string('name'); // hero, promotional_top, product_row_1, featured_tags, 
             $table->string('type'); // hero_slider, banner, product_row, featured_tags, custom
             $table->string('title_en')->nullable();
             $table->string('title_ar')->nullable();
@@ -26,11 +26,11 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Run the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('home_sections');
-    }
-};
+/**
+ * Run the migrations.
+ */
+public function down(): void
+{
+    Schema::dropIfExists('home_sections');
+}
+};      

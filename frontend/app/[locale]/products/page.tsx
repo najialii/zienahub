@@ -16,7 +16,8 @@ export default function ProductsPage() {
   const t = useTranslations('product');
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search') || '';
-  const tagFilter = searchParams.get('tag') || '';
+  const tagParam = searchParams.get('tag') || '';
+  const subcategoryParam = searchParams.get('subcategory') || '';
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,9 +47,9 @@ export default function ProductsPage() {
     fetchProducts();
   }, [locale]);
 
-  // Apply search and tag filters when they change
+  // Apply search, tag, and subcategory filters when they change
   useEffect(() => {
-    if ((searchQuery || tagFilter) && products.length > 0) {
+    if ((searchQuery || tagParam || subcategoryParam) && products.length > 0) {
       let filtered = [...products];
       
       // Apply search filter
@@ -61,26 +62,28 @@ export default function ProductsPage() {
         );
       }
       
-      // Apply tag filter
-      if (tagFilter) {
-        // For now, we'll filter by product name/description containing tag-related keywords
-        // This is a temporary solution until we have proper tag relationships in the API
-        const tagKeywords = getTagKeywords(tagFilter);
-        filtered = filtered.filter(p => 
-          tagKeywords.some(keyword => 
-            p.name.toLowerCase().includes(keyword) ||
-            p.description?.toLowerCase().includes(keyword) ||
-            p.slug.toLowerCase().includes(keyword)
-          )
-        );
+      // Apply tag filter by tag_id
+      if (tagParam) {
+        const tagId = parseInt(tagParam);
+        if (!isNaN(tagId)) {
+          filtered = filtered.filter(p => p.tag_id === tagId);
+        }
+      }
+      
+      // Apply subcategory filter by subcategory_id
+      if (subcategoryParam) {
+        const subcategoryId = parseInt(subcategoryParam);
+        if (!isNaN(subcategoryId)) {
+          filtered = filtered.filter(p => p.subcategory_id === subcategoryId);
+        }
       }
       
       setFilteredProducts(filtered);
-    } else if (!searchQuery && !tagFilter) {
-      // Re-apply filters if no search query or tag filter
+    } else if (!searchQuery && !tagParam && !subcategoryParam) {
+      // Re-apply filters if no search query, tag, or subcategory filter
       handleFilterChange(activeFilters);
     }
-  }, [searchQuery, tagFilter, products]);
+  }, [searchQuery, tagParam, subcategoryParam, products]);
 
   // Helper function to get keywords for tag filtering
   const getTagKeywords = (tagSlug: string): string[] => {
@@ -173,18 +176,18 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
       
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl md:text-3xl font-medium text-neutral-900 mb-1">
                 {searchQuery 
                   ? (locale === 'en' ? `Search Results for "${searchQuery}"` : `نتائج البحث عن "${searchQuery}"`)
-                  : tagFilter
-                  ? (locale === 'en' ? `Products for ${tagFilter.replace('-', ' ')}` : `منتجات ${tagFilter.replace('-', ' ')}`)
+                  : tagParam
+                  ? (locale === 'en' ? `Products with Tag` : `منتجات بالعلامة`)
+                  : subcategoryParam
+                  ? (locale === 'en' ? `Products in Subcategory` : `منتجات في الفئة الفرعية`)
                   : (locale === 'en' ? 'All Products' : 'جميع المنتجات')
                 }
               </h1>

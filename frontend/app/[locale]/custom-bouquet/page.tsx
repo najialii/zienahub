@@ -93,7 +93,7 @@ export default function CustomBouquetPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
+      {/* <Header /> */}
       
       <main className="flex-1 py-8">
         <div className="container mx-auto px-4 max-w-7xl">

@@ -15,6 +15,9 @@ class ProductTranslation extends Model
         'locale',
         'name',
         'description',
+        'how_to_use',
+        'ingredients',
+        'benefits',
     ];
 
     /**

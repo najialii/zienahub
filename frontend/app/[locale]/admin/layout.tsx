@@ -14,7 +14,6 @@ import {
   LogOut,
   Menu,
   X,
-  Truck,
   Gift,
   MessageCircle,
   Hash,
@@ -115,36 +114,24 @@ export default function AdminLayout({
       icon: Users 
     },
 
-    // { 
-    //   name: locale === 'ar' ? 'تخطيط الصفحة الرئيسية' : 'Home Layout', 
-    //   href: `/${locale}/admin/home-layout`, 
-    //   icon: LayoutDashboard 
-    // },
+   
     { 
       name: locale === 'ar' ? 'أكواد الخصم' : 'Promo Codes', 
       href: `/${locale}/admin/promo-codes`, 
       icon: Gift 
     },
-    // { 
-    //   name: locale === 'ar' ? 'موظفو التوصيل' : 'Delivery Personnel', 
-    //   href: `/${locale}/admin/delivery`, 
-    //   icon: Truck 
-    // },
-    // { 
-    //   name: locale === 'ar' ? 'إشعارات التوصيل' : 'Delivery Notifications', 
-    //   href: `/${locale}/admin/delivery-notifications`, 
-    //   icon: MessageCircle 
-    // },
+   
+    
     { 
       name: locale === 'ar' ? 'التحليلات' : 'Analytics', 
       href: `/${locale}/admin/analytics`, 
       icon: BarChart3 
     },
-    { 
-      name: locale === 'ar' ? 'الإعدادات' : 'Settings', 
-      href: `/${locale}/admin/settings`, 
-      icon: Settings 
-    },
+    // { 
+    //   name: locale === 'ar' ? 'الإعدادات' : 'Settings', 
+    //   href: `/${locale}/admin/settings`, 
+    //   icon: Settings 
+    // },
   ];
 
   return (

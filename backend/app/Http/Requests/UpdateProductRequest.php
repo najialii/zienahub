@@ -38,6 +38,16 @@ class UpdateProductRequest extends FormRequest
             'status' => 'sometimes|in:active,draft,out-of-stock',
             'image_url' => 'nullable|string|max:500',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240', // 10MB max
+            'gallery_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'brand' => 'nullable|string|max:255',
+            'size' => 'nullable|string|max:255',
+            'country_of_origin' => 'nullable|string|max:255',
+            'how_to_use' => 'nullable|string',
+            'how_to_use_ar' => 'nullable|string',
+            'ingredients' => 'nullable|string',
+            'ingredients_ar' => 'nullable|string',
+            'benefits' => 'nullable|string',
+            'benefits_ar' => 'nullable|string',
         ];
     }
 

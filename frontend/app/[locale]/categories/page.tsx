@@ -30,7 +30,6 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
       
       <main className="flex-1">
         <section className="py-12 md:py-16">

@@ -13,17 +13,24 @@ class Tenant extends Model
     protected $fillable = [
         'name',
         'slug',
+        'monthly_fee',
+        'pricing_tier_id',
         'phone_number',
         'logo',
         'cover_image',
         'description',
         'address',
         'is_active',
+        'verification_status',
+        'rejection_reason',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'monthly_fee' => 'decimal:2',
     ];
+
+    protected $appends = ['effective_monthly_fee'];
 
     public function users(): HasMany
     {
@@ -43,6 +50,20 @@ class Tenant extends Model
     public function subscription(): HasMany
     {
         return $this->hasOne(Subscription::class);
+    }
+
+    public function pricingTier()
+    {
+        return $this->belongsTo(PricingTier::class);
+    }
+
+    // Get the effective monthly fee (from tier or custom)
+    public function getEffectiveMonthlyFeeAttribute()
+    {
+        if ($this->pricing_tier_id && $this->relationLoaded('pricingTier') && $this->pricingTier) {
+            return (float) $this->pricingTier->monthly_fee;
+        }
+        return (float) ($this->monthly_fee ?? 0);
     }
 
 }

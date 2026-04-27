@@ -91,6 +91,7 @@ export const useCartStore = create<CartStore>()(
         const existingItem = items.find((i) => i.productId === item.productId);
         const quantity = item.quantity || 1;
 
+        // Always update local state first (optimistic update)
         if (existingItem) {
           set({
             items: items.map((i) =>
@@ -104,7 +105,6 @@ export const useCartStore = create<CartStore>()(
             items: [
               ...items,
               {
-                // id is not used for local operations, but keep for server sync compatibility
                 id: undefined,
                 productId: item.productId,
                 name: item.name,
@@ -118,12 +118,14 @@ export const useCartStore = create<CartStore>()(
           });
         }
 
+        // Try to sync with server (non-blocking)
         const token = localStorage.getItem('auth_token');
         if (!token) {
-          console.log('No auth token, keeping local cart only');
+          console.log('No auth token, cart saved locally only');
           return;
         }
 
+        // Sync with server in background
         try {
           const response = await fetch(`${API_URL}/cart`, {
             method: 'POST',
@@ -138,7 +140,15 @@ export const useCartStore = create<CartStore>()(
             }),
           });
 
-          const data = await response.json();
+          // Try to parse response
+          let data;
+          try {
+            data = await response.json();
+          } catch (parseError) {
+            console.warn('Failed to parse server response, but cart is saved locally');
+            return; // Cart is already saved locally, so we're good
+          }
+
           if (response.ok && data.success) {
             console.log('Cart synced with server successfully');
             // Update the local item id if it's a new item
@@ -151,55 +161,40 @@ export const useCartStore = create<CartStore>()(
               }
             }
           } else {
-            console.error('Failed to sync cart with server:', data);
-            if (existingItem) {
-              set({
-                items: items.map((i) =>
-                  i.productId === item.productId
-                    ? { ...i, quantity: existingItem.quantity }
-                    : i
-                ),
-              });
-            } else {
-              set({ items: items.filter(i => i.productId !== item.productId) });
-            }
+            // Log error but don't revert - cart is already saved locally
+            console.warn('Server sync failed, but cart is saved locally:', {
+              status: response.status,
+              message: data?.message || 'Unknown error',
+              errors: data?.errors || null
+            });
           }
         } catch (error) {
-          console.error('Network error syncing cart:', error);
-          if (existingItem) {
-            set({
-              items: items.map((i) =>
-                i.productId === item.productId
-                  ? { ...i, quantity: existingItem.quantity }
-                  : i
-              ),
-            });
-          } else {
-            set({ items: items.filter(i => i.productId !== item.productId) });
-          }
+          // Network error - cart is already saved locally, so just log
+          console.warn('Network error syncing cart (cart saved locally):', error instanceof Error ? error.message : 'Unknown error');
         }
       },
 
       removeItem: async (id) => {
         const items = get().items;
-        // Remove by productId for local state
         const item = items.find(i => i.productId === id);
         if (!item) return;
 
+        // Always update local state first (optimistic update)
         set({ items: items.filter((item) => item.productId !== id) });
 
+        // Try to sync with server (non-blocking)
         const token = localStorage.getItem('auth_token');
         if (!token) {
-          console.log('No auth token, keeping local cart only');
+          console.log('No auth token, item removed locally only');
           return;
         }
 
-        // Use server id if available
         const serverId = item.id;
         if (!serverId) {
-          console.error('Cannot remove item without server id, skipping server sync');
+          console.log('No server ID, item removed locally only');
           return;
         }
+
         try {
           const response = await fetch(`${API_URL}/cart/${serverId}`, {
             method: 'DELETE',
@@ -209,21 +204,18 @@ export const useCartStore = create<CartStore>()(
             },
           });
 
-          if (!response.ok) {
-            console.error('Failed to remove item from server cart');
-            set({ items });
+          if (response.ok) {
+            console.log('Item removed from server cart');
+          } else {
+            console.warn('Failed to remove item from server, but removed locally');
           }
         } catch (error) {
-          console.error('Network error removing cart item:', error);
-          set({ items });
+          console.warn('Network error removing item (removed locally):', error instanceof Error ? error.message : 'Unknown error');
         }
       },
 
       updateQuantity: async (id, quantity) => {
         const items = get().items;
-        const previousItems = [...items];
-
-        // Find by productId for local state
         const item = items.find(i => i.productId === id);
         if (!item) return;
 
@@ -232,25 +224,26 @@ export const useCartStore = create<CartStore>()(
           return;
         }
 
+        // Always update local state first (optimistic update)
         set({
           items: items.map((item) =>
             item.productId === id ? { ...item, quantity } : item
           ),
         });
 
-        // Sync with server if authenticated
+        // Try to sync with server (non-blocking)
         const token = localStorage.getItem('auth_token');
         if (!token) {
-          console.log('No auth token, keeping local cart only');
+          console.log('No auth token, quantity updated locally only');
           return;
         }
 
-        // Use server id if available
         const serverId = item.id;
         if (!serverId) {
-          console.error('Cannot update item without server id, skipping server sync');
+          console.log('No server ID, quantity updated locally only');
           return;
         }
+
         try {
           const response = await fetch(`${API_URL}/cart/${serverId}`, {
             method: 'PUT',
@@ -262,28 +255,24 @@ export const useCartStore = create<CartStore>()(
             body: JSON.stringify({ quantity }),
           });
 
-          if (!response.ok) {
-            console.error('Failed to update cart item on server');
-            // Revert on error
-            set({ items: previousItems });
+          if (response.ok) {
+            console.log('Quantity updated on server');
+          } else {
+            console.warn('Failed to update quantity on server, but updated locally');
           }
         } catch (error) {
-          console.error('Network error updating cart item:', error);
-          // Revert on error
-          set({ items: previousItems });
+          console.warn('Network error updating quantity (updated locally):', error instanceof Error ? error.message : 'Unknown error');
         }
       },
 
       clearCart: async () => {
-        const previousItems = get().items;
-        
-        // Update local state immediately
+        // Always update local state first (optimistic update)
         set({ items: [] });
 
-        // Sync with server if authenticated
+        // Try to sync with server (non-blocking)
         const token = localStorage.getItem('auth_token');
         if (!token) {
-          console.log('No auth token, keeping local cart only');
+          console.log('No auth token, cart cleared locally only');
           return;
         }
 
@@ -296,15 +285,13 @@ export const useCartStore = create<CartStore>()(
             },
           });
 
-          if (!response.ok) {
-            console.error('Failed to clear cart on server');
-            // Revert on error
-            set({ items: previousItems });
+          if (response.ok) {
+            console.log('Cart cleared on server');
+          } else {
+            console.warn('Failed to clear cart on server, but cleared locally');
           }
         } catch (error) {
-          console.error('Network error clearing cart:', error);
-          // Revert on error
-          set({ items: previousItems });
+          console.warn('Network error clearing cart (cleared locally):', error instanceof Error ? error.message : 'Unknown error');
         }
       },
 

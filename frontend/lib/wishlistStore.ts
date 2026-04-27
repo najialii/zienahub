@@ -77,23 +77,22 @@ export const useWishlistStore = create<WishlistStore>()(
       },
 
       addItem: async (item) => {
-        const token = localStorage.getItem('auth_token');
-        
         // Check if already exists locally
         const items = get().items;
         const exists = items.find((i) => i.productId === item.productId);
         if (exists) {
-          console.log('Item already in wishlist locally');
+          console.log('Item already in wishlist');
           return;
         }
 
-        // Add to local state immediately
+        // Always add to local state first (optimistic update)
         const newItem = { ...item, addedAt: Date.now() };
         set({ items: [...items, newItem] });
-        console.log('Added item to wishlist locally:', item.productId);
 
+        // Try to sync with server (non-blocking)
+        const token = localStorage.getItem('auth_token');
         if (!token) {
-          console.log('No auth token, keeping local only');
+          console.log('No auth token, wishlist saved locally only');
           return;
         }
 
@@ -108,41 +107,30 @@ export const useWishlistStore = create<WishlistStore>()(
             body: JSON.stringify({ product_id: item.productId }),
           });
 
-          const data = await response.json();
-
           if (response.ok) {
-            console.log('Item added to wishlist on server:', item.productId);
-            return;
-          }
-
-          // If 400 and already exists, keep it in local state (don't revert)
-          if (response.status === 400 && data.message?.includes('already in wishlist')) {
-            console.log('Item already in wishlist on server, keeping local copy');
-            return;
-          }
-
-          // Only revert on actual server errors (500, etc)
-          if (response.status >= 500) {
-            console.error('Server error adding to wishlist:', data);
-            set({ items: get().items.filter((i) => i.productId !== item.productId) });
+            console.log('Item added to wishlist on server');
+          } else {
+            const data = await response.json();
+            // If already exists on server, that's fine - keep local copy
+            if (response.status === 400 && data.message?.includes('already in wishlist')) {
+              console.log('Item already in wishlist on server');
+            } else {
+              console.warn('Failed to add to wishlist on server, but saved locally');
+            }
           }
         } catch (error) {
-          console.error('Network error adding to wishlist:', error);
-          // Revert on network error
-          set({ items: get().items.filter((i) => i.productId !== item.productId) });
+          console.warn('Network error adding to wishlist (saved locally):', error instanceof Error ? error.message : 'Unknown error');
         }
       },
 
       removeItem: async (productId) => {
-        const token = localStorage.getItem('auth_token');
-        
-        // Optimistic update - remove from UI immediately
-        const previousItems = get().items;
-        set({ items: previousItems.filter((item) => item.productId !== productId) });
-        console.log('Removing item from wishlist:', productId);
+        // Always update local state first (optimistic update)
+        set({ items: get().items.filter((item) => item.productId !== productId) });
 
+        // Try to sync with server (non-blocking)
+        const token = localStorage.getItem('auth_token');
         if (!token) {
-          console.log('No auth token, keeping local removal only');
+          console.log('No auth token, item removed locally only');
           return;
         }
 
@@ -155,19 +143,13 @@ export const useWishlistStore = create<WishlistStore>()(
             },
           });
 
-          const data = await response.json();
-
           if (response.ok) {
-            console.log('Item removed from wishlist on server:', productId);
+            console.log('Item removed from wishlist on server');
           } else {
-            console.error('Failed to remove from wishlist on server:', data);
-            // Revert on error
-            set({ items: previousItems });
+            console.warn('Failed to remove from wishlist on server, but removed locally');
           }
         } catch (error) {
-          console.error('Failed to remove from wishlist:', error);
-          // Revert on error
-          set({ items: previousItems });
+          console.warn('Network error removing from wishlist (removed locally):', error instanceof Error ? error.message : 'Unknown error');
         }
       },
 
@@ -185,13 +167,15 @@ export const useWishlistStore = create<WishlistStore>()(
       },
 
       clearWishlist: async () => {
-        const token = localStorage.getItem('auth_token');
-        
-        // Optimistic update
-        const previousItems = get().items;
+        // Always update local state first (optimistic update)
         set({ items: [] });
 
-        if (!token) return;
+        // Try to sync with server (non-blocking)
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.log('No auth token, wishlist cleared locally only');
+          return;
+        }
 
         try {
           const response = await fetch(`${API_URL}/wishlist`, {
@@ -202,14 +186,13 @@ export const useWishlistStore = create<WishlistStore>()(
             },
           });
 
-          if (!response.ok) {
-            // Revert on error
-            set({ items: previousItems });
+          if (response.ok) {
+            console.log('Wishlist cleared on server');
+          } else {
+            console.warn('Failed to clear wishlist on server, but cleared locally');
           }
         } catch (error) {
-          console.error('Failed to clear wishlist:', error);
-          // Revert on error
-          set({ items: previousItems });
+          console.warn('Network error clearing wishlist (cleared locally):', error instanceof Error ? error.message : 'Unknown error');
         }
       },
 

@@ -139,6 +139,8 @@ export const tenantsApi = {
   getAll: async () => request('/tenants', 'GET'),
 
   getById: async (id: number) => request(`/tenants/${id}`, 'GET'),
+
+  getBySlug: async (slug: string) => request(`/tenants/${slug}`, 'GET'),
 };
 
 export default {

@@ -49,7 +49,7 @@ export default function CartModal() {
           ) : (
             <div className="space-y-4">
               {items.map((item: CartItem) => (
-                <div key={item.id} className="flex gap-4 border-b pb-4">
+                <div key={item.productId} className="flex gap-4 border-b pb-4">
                   {/* Product Image */}
                   <div className="relative w-20 h-20 flex-shrink-0 bg-neutral-100 rounded overflow-hidden">
                     <img

@@ -277,7 +277,7 @@ export default function CategoryDetailPage() {
   if (!category) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header />
+        {/* <Header /> */}
         <main className="flex-1 container mx-auto px-4 py-12">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">
@@ -297,7 +297,7 @@ export default function CategoryDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
+      {/* <Header /> */}
       
       <main className="flex-1">
         <div className="container mx-auto px-2 md:px-4 py-4 md:py-6">

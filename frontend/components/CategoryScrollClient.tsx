@@ -58,9 +58,9 @@ export default function CategoryScrollClient({ categories }: CategoryScrollClien
               <Link
                 key={category.id}
                 href={`/${locale}/categories/${category.slug}`}
-                className="flex-none w-24 md:w-32 snap-start group/item text-center"
+                className="flex-none w-[90px] md:w-[110px] snap-start group/item text-center"
               >
-                <div className="relative aspect-square mb-3 overflow-hidden rounded-full border border-neutral-100 bg-neutral-50 shadow-sm transition-all group-hover/item:shadow-md group-hover/item:border-pink-200">
+                <div className="relative w-[80px] h-[80px] md:w-[100px] md:h-[100px] mx-auto mb-3 overflow-hidden rounded-full border border-neutral-200 bg-neutral-50 shadow-sm transition-all group-hover/item:shadow-lg group-hover/item:border-primary flex items-center justify-center">
                   {category.image_url ? (
                     <img
                       src={category.image_url}
@@ -74,7 +74,7 @@ export default function CategoryScrollClient({ categories }: CategoryScrollClien
                   )}
                 </div>
                 
-                <p className="text-sm font-semibold text-neutral-700 group-hover/item:text-pink-600 transition-colors truncate">
+                <p className="text-xs md:text-sm font-semibold text-neutral-700 group-hover/item:text-primary transition-colors max-w-full text-center truncate">
                   {locale === 'ar' && (category as any).name_ar ? (category as any).name_ar : category.name}
                 </p>
               </Link>

@@ -2,8 +2,30 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { ShoppingBasket, Heart, Minus, Plus, Check, Store, MapPin, ShieldCheck } from 'lucide-react';
+import { ShoppingBasket, Heart, Minus, Plus, Check, Store, MapPin, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
+
+const AccordionItem = ({ title, content, isDefaultOpen = false }: { title: string, content: string | undefined, isDefaultOpen?: boolean }) => {
+  const [isOpen, setIsOpen] = useState(isDefaultOpen);
+  if (!content) return null;
+  return (
+    <div className="border-b border-neutral-100 py-1">
+      <button 
+        onClick={() => setIsOpen(!isOpen)} 
+        className="flex w-full justify-between items-center py-4 text-base font-bold text-neutral-900 hover:text-neutral-600 transition-colors"
+      >
+        {title}
+        {isOpen ? <Minus className="w-4 h-4 text-neutral-400" /> : <Plus className="w-4 h-4 text-neutral-400" />}
+      </button>
+      {isOpen && (
+        <div className="pb-6 text-neutral-600 leading-relaxed whitespace-pre-line text-sm border-t border-neutral-50 pt-4">
+          {content}
+        </div>
+      )}
+    </div>
+  );
+};
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import RelatedProducts from '@/components/RelatedProducts';
@@ -27,7 +49,8 @@ export default function ProductDetailPage() {
   const t = useTranslations('product');
   
   const [product, setProduct] = useState<Product | null>(null);
-  const [tenant, setTenant] = useState<Tenant | null>(null); // New state for Shop data
+  const [tenant, setTenant] = useState<Tenant | null>(null); 
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(true);
   const [tenantLoading, setTenantLoading] = useState(false);
@@ -43,6 +66,7 @@ export default function ProductDetailPage() {
         const slug = params.slug as string;
         const productData = await productsApi.getBySlug(slug, locale);
         setProduct(productData);
+        setSelectedImage(productData?.image_url || null);
         console.log("asdasda0",productData)
 
         if (productData?.tenant_id) {
@@ -51,6 +75,7 @@ export default function ProductDetailPage() {
           setTenant(tenantData);
           console.log("dgdgdg",tenantData)
         }
+      } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
@@ -64,7 +89,6 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header />
         <main className="flex-1 container mx-auto px-4 py-12">
           <div className="animate-pulse max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -86,7 +110,6 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="min-h-screen flex flex-col bg-neutral-50">
-        <Header />
         <main className="flex-1 container mx-auto px-4 py-12 text-center">
             <h1 className="text-2xl font-bold mb-4">{t('notFound')}</h1>
             <p className="text-neutral-600">{t('notFoundDesc')}</p>
@@ -127,18 +150,39 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
       
       <main className="flex-1 container mx-auto px-2 md:px-4 py-6 md:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-7xl mx-auto">
           
-          {/* Left: Product Image */}
-          <div className="relative">
-            <div className="aspect-square relative bg-white border border-neutral-100 rounded-2xl overflow-hidden p-4 md:p-8">
+          {/* Left: Product Image Gallery */}
+          <div className="flex flex-col-reverse md:flex-row gap-4 relative w-full">
+            
+            {/* Thumbnails */}
+            <div className={`flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto w-full md:w-20 no-scrollbar scroll-smooth snap-x snap-mandatory ${(!product.images || product.images.length === 0) ? 'hidden' : ''}`}>
+              <button 
+                onClick={() => setSelectedImage(product.image_url)}
+                className={`relative flex-none w-16 h-16 md:w-20 md:h-20 bg-white border rounded-xl overflow-hidden snap-start transition-all hover:border-neutral-400 ${selectedImage === product.image_url ? 'border-neutral-900 border-2' : 'border-neutral-200'}`}
+              >
+                <img src={product.image_url} alt="Main" className="w-full h-full object-cover p-1" />
+              </button>
+              
+              {product.images?.map((img) => (
+                <button 
+                  key={img.id}
+                  onClick={() => setSelectedImage(img.image_url)}
+                  className={`relative flex-none w-16 h-16 md:w-20 md:h-20 bg-white border rounded-xl overflow-hidden snap-start transition-all hover:border-neutral-400 ${selectedImage === img.image_url ? 'border-neutral-900 border-2' : 'border-neutral-200'}`}
+                >
+                  <img src={img.image_url} alt="Gallery view" className="w-full h-full object-cover p-1" />
+                </button>
+              ))}
+            </div>
+
+            {/* Main Featured Image */}
+            <div className="aspect-square relative bg-white border border-neutral-100 rounded-2xl overflow-hidden p-4 md:p-8 flex-1 w-full">
               <img
-                src={product.image_url}
+                src={selectedImage || product.image_url}
                 alt={product.name}
-                className="w-full h-full object-contain rounded-lg"
+                className="w-full h-full object-contain rounded-lg transition-all duration-300"
               />
               <button
                 onClick={handleToggleWishlist}
@@ -156,25 +200,31 @@ export default function ProductDetailPage() {
             
             {/* Shop Badge / Info Section */}
             {tenant && (
-              <div className="flex items-center gap-3 p-3 bg-white border border-neutral-100 rounded-xl shadow-sm self-start">
-                <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-neutral-600">
+              <Link 
+                href={`/${locale}/tenants/${tenant.slug}`}
+                className="flex items-center gap-3 p-3 bg-white border border-neutral-100 rounded-xl shadow-sm self-start hover:border-neutral-300 hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-neutral-600 group-hover:bg-neutral-200 transition-colors">
                   <Store className="w-5 h-5" />
                 </div>
                 <div>
                   <p className="text-xs text-neutral-500 uppercase tracking-wider font-bold">
                     {locale === 'en' ? 'Sold by' : 'يباع بواسطة'}
                   </p>
-                  <p className="text-sm font-semibold text-neutral-900">{tenant.name}</p>
+                  <p className="text-sm font-semibold text-neutral-900 group-hover:text-primary transition-colors">{tenant.name}</p>
                 </div>
                 <ShieldCheck className="w-4 h-4 text-blue-500 ml-auto" />
-              </div>
+              </Link>
             )}
 
             <div>
+              {product.brand && (
+                <p className="text-sm font-bold text-neutral-500 uppercase tracking-widest mb-1">{product.brand}</p>
+              )}
               <h1 className="text-3xl md:text-4xl font-bold mb-3 text-neutral-900 leading-tight">
                 {product.name}
               </h1>
-              <div className="flex items-baseline gap-4">
+              <div className="flex items-baseline gap-4 mt-2">
                 <Price amount={product.price} className="text-3xl font-bold text-neutral-900" />
                 {product.stock_quantity > 0 && (
                   <span className="px-2.5 py-0.5 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-100">
@@ -182,10 +232,16 @@ export default function ProductDetailPage() {
                   </span>
                 )}
               </div>
+              {product.size && (
+                <p className="text-sm text-neutral-500 mt-2 font-medium">{locale === 'en' ? 'Size/Volume' : 'الحجم'}: {product.size}</p>
+              )}
             </div>
 
-            <div className="py-4 border-y border-neutral-100">
-              <p className="text-neutral-600 leading-relaxed">{product.description}</p>
+            <div className="py-2">
+              <AccordionItem title={locale === 'en' ? 'Overview' : 'نظرة عامة'} content={product.description} isDefaultOpen={true} />
+              <AccordionItem title={locale === 'en' ? 'Benefits' : 'الفوائد'} content={product.benefits} />
+              <AccordionItem title={locale === 'en' ? 'How To Use' : 'طريقة الاستخدام'} content={product.how_to_use} />
+              <AccordionItem title={locale === 'en' ? 'Ingredients' : 'المكونات'} content={product.ingredients} />
             </div>
 
             {/* Actions */}

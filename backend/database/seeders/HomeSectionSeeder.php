@@ -17,16 +17,18 @@ class HomeSectionSeeder extends Seeder
             [
                 'name' => 'hero_slider',
                 'type' => 'hero_slider',
-                'title_en' => 'Hero Slider',
-                'title_ar' => 'شريط البطل',
-                'description_en' => 'Main hero slider at the top of the homepage',
-                'description_ar' => 'شريط البطل الرئيسي في أعلى الصفحة الرئيسية',
+                'title_en' => 'Exquisite Floral Collections',
+                'title_ar' => 'مجموعات الزهور الرائعة',
+                'description_en' => 'Experience the art of gifting with our premium curated sliders.',
+                'description_ar' => 'اختبر فن الإهداء مع شرائحنا المنسقة المتميزة.',
                 'settings' => [
                     'autoplay' => true,
                     'autoplay_delay' => 5000,
+                    'transition' => 'fade',
                     'show_dots' => true,
                     'show_arrows' => true,
-                    'height' => 'auto'
+                    'full_width' => true,
+                    'height' => '80vh'
                 ],
                 'sort_order' => 1,
                 'is_active' => true,
@@ -34,13 +36,15 @@ class HomeSectionSeeder extends Seeder
             [
                 'name' => 'category_scroll',
                 'type' => 'custom',
-                'title_en' => 'Category Scroll',
-                'title_ar' => 'تمرير الفئات',
-                'description_en' => 'Horizontal scrolling category navigation',
-                'description_ar' => 'تنقل الفئات بالتمرير الأفقي',
+                'title_en' => 'Browse by Category',
+                'title_ar' => 'تصفح حسب الفئة',
+                'description_en' => 'Quick access to our main botanical departments.',
+                'description_ar' => 'وصول سريع إلى أقسامنا النباتية الرئيسية.',
                 'settings' => [
                     'show_all_categories' => true,
-                    'max_categories' => 10
+                    'max_categories' => 12,
+                    'image_shape' => 'circle', // Making it look like NiceOne/Instagram stories
+                    'show_labels' => true
                 ],
                 'sort_order' => 2,
                 'is_active' => true,
@@ -48,15 +52,16 @@ class HomeSectionSeeder extends Seeder
             [
                 'name' => 'promotional_top',
                 'type' => 'banner',
-                'title_en' => 'Top Promotional Banners',
-                'title_ar' => 'بانرات ترويجية علوية',
-                'description_en' => 'Promotional banners displayed at the top of content',
-                'description_ar' => 'بانرات ترويجية معروضة في أعلى المحتوى',
+                'title_en' => 'Today\'s Special Offers',
+                'title_ar' => 'عروض خاصة اليوم',
+                'description_en' => 'Limited time deals on our most popular arrangements.',
+                'description_ar' => 'عروض لفترة محدودة على أشهر تنسيقاتنا.',
                 'settings' => [
                     'banner_type' => 'promotional',
                     'position' => 'top',
                     'layout' => 'grid',
                     'columns' => 2,
+                    'gap' => '20px',
                     'max_banners' => 4
                 ],
                 'sort_order' => 3,
@@ -65,31 +70,32 @@ class HomeSectionSeeder extends Seeder
             [
                 'name' => 'product_row_1',
                 'type' => 'product_row',
-                'title_en' => 'Premium Roses',
-                'title_ar' => 'ورود مميزة',
-                'description_en' => 'Featured roses and bouquets collection',
-                'description_ar' => 'مجموعة الورود والباقات المميزة',
+                'title_en' => 'Signature Roses',
+                'title_ar' => 'ورودنا الخاصة',
+                'description_en' => 'Hand-picked premium roses for your special moments.',
+                'description_ar' => 'ورود فاخرة منتقاة يدوياً للحظاتك الخاصة.',
                 'settings' => [
-                    'category_filter' => 'flowers',
-                    'product_count' => 4,
+                    'category_filter' => 'roses',
+                    'product_count' => 8,
+                    'enable_slider' => true, // Scrollable row
                     'show_price' => true,
-                    'show_add_to_cart' => true,
-                    'layout' => 'grid'
+                    'show_rating' => true,
+                    'show_add_to_cart' => true
                 ],
                 'sort_order' => 4,
                 'is_active' => true,
             ],
             [
-                'name' => 'featured_tags',
-                'type' => 'featured_tags',
-                'title_en' => 'Featured Tags',
-                'title_ar' => 'العلامات المميزة',
-                'description_en' => 'Display featured product tags',
-                'description_ar' => 'عرض علامات المنتجات المميزة',
+                'name' => 'flash_sale_timer',
+                'type' => 'countdown',
+                'title_en' => 'Flash Sale Ending Soon',
+                'title_ar' => 'تنتهي عروض الفلاش قريباً',
+                'description_en' => 'Grab your favorites before they are gone!',
+                'description_ar' => 'احصل على مفضلاتك قبل نفاذ الكمية!',
                 'settings' => [
-                    'max_tags' => 8,
-                    'layout' => 'grid',
-                    'columns' => 4
+                    'end_date' => '2026-12-31 23:59:59',
+                    'background_color' => '#f8f4f1',
+                    'text_color' => '#b38b5d'
                 ],
                 'sort_order' => 5,
                 'is_active' => true,
@@ -97,87 +103,73 @@ class HomeSectionSeeder extends Seeder
             [
                 'name' => 'featured_subcategories',
                 'type' => 'featured_subcategories',
-                'title_en' => 'Featured Collections',
-                'title_ar' => 'المجموعات المميزة',
-                'description_en' => 'Display featured subcategories with their top products',
-                'description_ar' => 'عرض الأقسام الفرعية المميزة مع أفضل منتجاتها',
+                'title_en' => 'Luxury Collections',
+                'title_ar' => 'مجموعات فاخرة',
+                'description_en' => 'Curated subcategories featuring high-end gift sets.',
+                'description_ar' => 'أقسام فرعية منسقة تضم مجموعات هدايا راقية.',
                 'settings' => [
                     'products_per_subcategory' => 4,
-                    'max_subcategories' => 3
+                    'max_subcategories' => 3,
+                    'view_more_link' => true
                 ],
                 'sort_order' => 6,
                 'is_active' => true,
             ],
             [
-                'name' => 'category_banners',
+                'name' => 'middle_cta',
                 'type' => 'banner',
-                'title_en' => 'Category Banners',
-                'title_ar' => 'بانرات الفئات',
-                'description_en' => 'Category-specific promotional banners',
-                'description_ar' => 'بانرات ترويجية خاصة بالفئات',
+                'title_en' => 'Custom Bouquet Builder',
+                'title_ar' => 'صمم باقتك الخاصة',
+                'description_en' => 'Can’t find what you need? Design your own arrangement.',
+                'description_ar' => 'لم تجد ما تحتاجه؟ صمم تنسيقك الخاص.',
                 'settings' => [
-                    'banner_type' => 'category_banner',
-                    'layout' => 'grid',
-                    'columns' => 2,
-                    'max_banners' => 2
+                    'banner_type' => 'full_width_cta',
+                    'image_url' => 'cta-bg.jpg',
+                    'button_text_en' => 'Start Designing',
+                    'button_text_ar' => 'ابدأ التصميم',
+                    'overlay_opacity' => 0.4
                 ],
                 'sort_order' => 7,
                 'is_active' => true,
             ],
             [
-                'name' => 'product_row_2',
-                'type' => 'product_row',
-                'title_en' => 'Luxury Gift Sets',
-                'title_ar' => 'طقم هدايا فاخرة',
-                'description_en' => 'Premium gift boxes and luxury items',
-                'description_ar' => 'صناديق هدايا مميزة وعناصر فاخرة',
+                'name' => 'testimonials',
+                'type' => 'testimonials',
+                'title_en' => 'What Our Customers Say',
+                'title_ar' => 'ماذا يقول عملاؤنا',
+                'description_en' => 'Join thousands of happy customers.',
+                'description_ar' => 'انضم إلى آلاف العملاء السعداء.',
                 'settings' => [
-                    'category_filter' => 'luxury-gifts',
-                    'product_count' => 4,
-                    'show_price' => true,
-                    'show_add_to_cart' => true,
-                    'layout' => 'grid'
+                    'max_items' => 5,
+                    'autoplay' => true,
+                    'style' => 'minimal'
                 ],
                 'sort_order' => 8,
                 'is_active' => true,
             ],
             [
-                'name' => 'promotional_middle',
-                'type' => 'banner',
-                'title_en' => 'Middle Promotional Banners',
-                'title_ar' => 'بانرات ترويجية وسطية',
-                'description_en' => 'Promotional banners in the middle of content',
-                'description_ar' => 'بانرات ترويجية في وسط المحتوى',
+                'name' => 'newsletter',
+                'type' => 'newsletter',
+                'title_en' => 'Unlock 10% Off Your First Order',
+                'title_ar' => 'احصل على خصم 10% على طلبك الأول',
+                'description_en' => 'Subscribe to our newsletter for exclusive updates and floral tips.',
+                'description_ar' => 'اشترك في نشرتنا الإخبارية للحصول على تحديثات حصرية ونصائح حول الزهور.',
                 'settings' => [
-                    'banner_type' => 'promotional',
-                    'position' => 'middle',
-                    'layout' => 'single',
-                    'max_banners' => 1
+                    'placeholder_en' => 'Enter your email',
+                    'placeholder_ar' => 'أدخل بريدك الإلكتروني',
+                    'button_color' => '#000000'
                 ],
                 'sort_order' => 9,
-                'is_active' => true,
-            ],
-            [
-                'name' => 'product_row_3',
-                'type' => 'product_row',
-                'title_en' => 'Featured Products',
-                'title_ar' => 'منتجات مميزة',
-                'description_en' => 'Highlighted and trending products',
-                'description_ar' => 'منتجات مميزة ورائجة',
-                'settings' => [
-                    'category_filter' => 'featured',
-                    'product_count' => 4,
-                    'show_price' => true,
-                    'show_add_to_cart' => true,
-                    'layout' => 'grid'
-                ],
-                'sort_order' => 10,
                 'is_active' => true,
             ],
         ];
 
         foreach ($sections as $section) {
-            HomeSection::create($section);
+            // Using updateOrCreate ensures you don't create 1000 rows if you run the seeder twice
+            HomeSection::updateOrCreate(
+                ['name' => $section['name']],
+                $section
+            );
         }
     }
 }

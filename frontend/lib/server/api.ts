@@ -1,7 +1,6 @@
 /**
  * BFF (Backend for Frontend) Layer
- * 
- * This module provides server-side data fetching functions that can be called
+ * * This module provides server-side data fetching functions that can be called
  * from React Server Components. It handles authentication, caching, and
  * proper error handling.
  */
@@ -15,6 +14,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 function buildHeaders(options?: { locale?: string; token?: string }) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Accept': 'application/json', // Force Laravel to return JSON errors instead of HTML
   };
 
   if (options?.locale) {
@@ -53,7 +53,10 @@ async function fetchFromApi<T>(
     });
   }
 
-  const url = `${API_URL}${endpoint}${searchParams.toString() ? `?${searchParams}` : ''}`;
+  // Ensure there is a proper slash between API_URL and endpoint
+  const safeEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+  const url = `${API_URL}${safeEndpoint}${queryString}`;
 
   const response = await fetch(url, {
     method,
@@ -64,8 +67,13 @@ async function fetchFromApi<T>(
 
   if (!response.ok) {
     const errorText = await response.text();
-    let errorMessage = `API request failed with status ${response.status}`;
+    
+    // Check if the response is actually a Laravel HTML error page
+    if (errorText.includes('<!DOCTYPE html>')) {
+      throw new Error(`404 Not Found: The API route "${url}" does not exist on the server.`);
+    }
 
+    let errorMessage = `API request failed with status ${response.status}`;
     try {
       const errorJson = JSON.parse(errorText);
       errorMessage = errorJson.message || JSON.stringify(errorJson);
@@ -79,23 +87,49 @@ async function fetchFromApi<T>(
   return response.json();
 }
 
-// ==================== Categories ====================
+// ==================== Home Sections ====================
+
+export const homeSectionsApi = {
+  getAll: async () => {
+    // Standardizing to use the helper function for consistency
+    return fetchFromApi<{ success: boolean; data: any[] }>('/home-sections', { 
+      revalidate: 3600 
+    });
+  },
+};
+
+
+export interface Subcategory {
+  id: number;
+  name: string;
+  name_ar: string;
+  slug: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  name_ar: string;
+  slug: string;
+  image_url?: string;
+  subcategories?: Subcategory[];
+}
 
 export const categoriesApi = {
   getAll: async (locale: string = 'en', revalidate?: number) =>
-    fetchFromApi<{ id: number; name: string; name_ar: string; slug: string; image_url?: string }[]>(
+    fetchFromApi<Category[]>(
       '/categories',
       { locale, revalidate },
     ),
 
   getById: async (id: number, locale: string = 'en') =>
-    fetchFromApi<{ id: number; name: string; name_ar: string; slug: string; image_url?: string }>(
+    fetchFromApi<Category>(
       `/categories/${id}`,
       { locale },
     ),
 
   getBySlug: async (slug: string, locale: string = 'en') =>
-    fetchFromApi<{ id: number; name: string; name_ar: string; slug: string; image_url?: string }>(
+    fetchFromApi<Category>(
       `/categories/slug/${slug}`,
       { locale },
     ),
@@ -302,6 +336,7 @@ export const settingsApi = {
 };
 
 export default {
+  homeSectionsApi,
   categoriesApi,
   productsApi,
   subcategoriesApi,

@@ -11,13 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('product_tag', function (Blueprint $table) {
+        Schema::create('currencies', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('tag_id')->constrained()->onDelete('cascade');
+            $table->string('name_ar');
+            $table->string('name_en');
+            $table->string('cunconde')->unique();
+            $table->string('country_code', 2)->index();
+            $table->decimal('exchange_rate', 15, 4)->default(1.0000);
+            $table->string('symbol');
+
+
             $table->timestamps();
-            
-            $table->unique(['product_id', 'tag_id']);
         });
     }
 
@@ -26,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('product_tag');
+        Schema::dropIfExists('currencies');
     }
 };
